@@ -89,3 +89,4 @@ ENV/
 .ropeproject
 
 *.db
+account-settings.ini
