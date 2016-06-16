@@ -1,9 +1,12 @@
 import datetime
+import logging
 #from twilio.rest import TwilioRestClient
+from .exception import NetworkDownException
 
 class Sms:
 
-    def __init__(self, account_sid, auth_token, account_phone_number):
+    def __init__(self, db, account_sid, auth_token, account_phone_number):
+        self.db = db
         self.account_sid = account_sid
         self.auth_token = auth_token
         self.account_phone_number = account_phone_number
@@ -11,38 +14,77 @@ class Sms:
         pass
 
     def send(self, toPhoneNumber, message):
-        print("Attempting to text {} with message: {}".format(toPhoneNumber, message))
-        try:
-            #response = self.twilioRestClient.sms.messages.create(body="{}".format(message),to="{}".format(toPhoneNumber),from_="{}".format(self.account_phone_number))
-            response = "yay!"
-            print("Response: {}".format(response))
-        except:
-            print("Unable to send message {} to {}".format(message, toPhoneNumber))
-            pass
+        logging.info("Attempting to text {} with message: {}".format(toPhoneNumber, message))
+
+        # Try to send message.  If sending fails, retry 5 times before giving up
+        for x in range(0, 5):
+            if x is not 0:
+                time.sleep(5) # Wait 5 seconds if this is a retry
+
+            try:
+                #response = self.twilioRestClient.sms.messages.create(body="{}".format(message),to="{}".format(toPhoneNumber),from_="{}".format(self.account_phone_number))
+                response = "yay!"
+                logging.info("Response from sending message:{} = {}".format(message, response))
+                return
+            except Exception as e:
+                logging.warn("Failed on attempt {} of sending message: {}, {}, {} Because: {}".format(x, message, toPhoneNumber, e))
+                failure = e
+
+        # Assume network down.  Could be other things, but most likely this
+        raise NetworkDownException('Unable to call twilio to send to {} message {}'.format(toPhoneNumber, message)) from failure
 
 
     def list(self, dateSince=None):
         dateSince = dateSince if dateSince else datetime.datetime.now() - datetime.timedelta(minutes=15)
-        print("Attempting to list all messages since: {}".format(dateSince))
+        logging.info("Attempting to list all unprocessed messages since: {}".format(dateSince))
 
+        twilioMessages = self.__list_all(dateSince)
+        processedMessages = self.db.find_messages(datetime.datetime.now() - datetime.timedelta(days=3))
+
+        # Find all the messages that have not been processed already
+        messages = self.__messages_not_in_messages(twilioMessages, processedMessages)
+
+        # Sort all the unprocessed messages so that the oldest is executed first
+        messages.sort(key=lambda k: (k['sentAt'] is None, k['sentAt'] == datetime.datetime.now(), k['sentAt']))
+        return messages
+
+
+    def __list_all(self, dateSince):
         messages = []
-        #try:
-        #messages = TwilioClient.messages.list(date_sent=datetime.datetime.utcnow())
-        messages.append({'sid': '30_mins', 'body': 'Open', 'status': 'received', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=30)})
-        messages.append({'sid': '5_hours', 'body': 'Close', 'status': 'received', 'sentAt':  datetime.datetime.now() - datetime.timedelta(hours=5)})
-        messages.append({'sid': '123', 'body': 'Close', 'status': 'received', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=15)})
-        messages.append({'sid': '10_mins', 'body': 'Status', 'status': 'received', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=10)})
-        messages.append({'sid': '13_mins', 'body': 'Whoopy whoopy', 'status': 'received', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=13)})
-        messages.append({'sid': 'mins_2', 'body': 'Close', 'status': 'received', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=2)})
-        messages.append({'sid': 'None_mins', 'body': 'Close', 'status': 'received', 'sentAt':  None})
-        messages.append({'sid': '12_mins', 'body': 'Close', 'status': 'received', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=12)})
-        messages.append({'sid': 'mins_7', 'body': 'Lock', 'status': 'received', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=7)})
-        messages.append({'sid': 'mins_1_recieving', 'body': 'Open', 'status': 'receiving', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=1)})
-        messages.append({'sid': 'mins_1_failed', 'body': 'Open', 'status': 'failed', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=1)})
-        messages.append({'sid': 'no status', 'body': 'Close', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=1)})
-        #except:
-        #    print("Unable to fetch message list")
-        #    pass
+        try:
+            logging.debug('calling twilio')
+            #messages = TwilioClient.messages.list(date_sent=datetime.datetime.utcnow())
+        except Exception as e:
+            raise NetworkDownException('Unable to call twilio to get list of messages from: {}'.format(dateSince)) from e
+
+        #messages.append({'sid': '30_mins', 'body': 'Open', 'status': 'received', 'phoneFrom': '15551112222', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=30)})
+        #messages.append({'sid': '5_hours', 'body': 'Close', 'status': 'received', 'phoneFrom': '15551112222', 'sentAt':  datetime.datetime.now() - datetime.timedelta(hours=5)})
+        #messages.append({'sid': '123', 'body': 'Close', 'status': 'received', 'phoneFrom': '15551113333', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=15)})
+        #messages.append({'sid': '10_mins', 'body': 'Status', 'status': 'received', 'phoneFrom': '15551112222', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=10)})
+        #messages.append({'sid': '13_mins', 'body': 'Whoopy whoopy', 'status': 'received', 'phoneFrom': '15551112222', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=13)})
+        #messages.append({'sid': 'mins_2', 'body': 'Close', 'status': 'received', 'phoneFrom': '15551112222', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=2)})
+        #messages.append({'sid': 'None_mins', 'body': 'Close', 'status': 'received', 'phoneFrom': '15551112222', 'sentAt':  None})
+        #messages.append({'sid': '12_mins', 'body': 'Close', 'status': 'received', 'phoneFrom': '15551112222', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=12)})
+        #messages.append({'sid': 'mins_7', 'body': 'Lock', 'status': 'received', 'phoneFrom': '15551112222', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=7)})
+        #messages.append({'sid': 'mins_1_recieving', 'body': 'Open', 'status': 'receiving', 'phoneFrom': '15551112222', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=1)})
+        #messages.append({'sid': 'mins_1_failed', 'body': 'Open', 'status': 'failed', 'phoneFrom': '15551112222', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=1)})
+        #messages.append({'sid': 'no status', 'body': 'Close', 'phoneFrom': '15551112222', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=1)})
+
+        messages.append({'sid': '1-close', 'body': 'Close', 'status': 'received', 'phoneFrom': '15551113333', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=15)})
+        messages.append({'sid': '2-lock', 'body': 'Lock', 'status': 'received', 'phoneFrom': '15551113333', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=12)})
+        messages.append({'sid': '22-lock', 'body': 'Lock', 'status': 'received', 'phoneFrom': '15551113333', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=12)})
+        messages.append({'sid': '3-open', 'body': 'Open', 'status': 'received', 'phoneFrom': '15551113333', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=11)})
+        messages.append({'sid': '4-unlock', 'body': 'Unlock', 'status': 'received', 'phoneFrom': '15551113333', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=10)})
+        messages.append({'sid': '5-open', 'body': 'Open', 'status': 'received', 'phoneFrom': '15551113333', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=9)})
+        messages.append({'sid': '6-ignore-me', 'body': 'This is just an arbitrary text', 'status': 'received', 'phoneFrom': '15551113333', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=9)})
 
         # only messages that have a status of 'received' are allowed to be returned.  received == On inbound messages only. The inbound message was received by one of your Twilio numbers.
         return (m for m in messages if m.get("status", None) == 'received')
+
+    # Search for items in list1 that do not exist in list2
+    def __messages_not_in_messages(self, list1, list2):
+        notIns = []
+        for l in list1: 
+            if not any(d['sid'] == l.get('sid') for d in list2):
+                notIns.append(l)
+        return notIns

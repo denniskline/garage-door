@@ -1,5 +1,6 @@
 import sqlite3
 import datetime
+import logging
 
 class Database:
 
@@ -24,6 +25,7 @@ class Database:
                        "phone_to text, " + 
                        "direction text, " + 
                        "status text, " + 
+                       "status_message text, " + 
                        "error_code text, " + 
                        "error_message text, " + 
                        "body text)")
@@ -38,7 +40,6 @@ class Database:
             c.execute("CREATE TABLE IF NOT EXISTS door_challenge (code text, text_message_sid text, challenged_at timestamp)")
 
             conn.commit()
-            conn.close()
         finally:
             conn.close()
 
@@ -53,8 +54,8 @@ class Database:
         conn = self.create_connection()
         try:
             c = conn.cursor()
-            insert = ("INSERT INTO text_messages (sid, created_at, sent_at, phone_from, phone_to, direction, status, error_code, error_message, body) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+            insert = ("INSERT INTO text_messages (sid, created_at, sent_at, phone_from, phone_to, direction, status, status_message, error_code, error_message, body) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
             c.execute(insert, (
                 textMessage.get("sid"), 
                 textMessage.get("createdAt", datetime.datetime.now()), 
@@ -63,17 +64,33 @@ class Database:
                 textMessage.get("phoneTo", None), 
                 textMessage.get("direction", None), 
                 textMessage.get("status", None), 
+                textMessage.get("statusMessage", None), 
                 textMessage.get("errorCode", None), 
                 textMessage.get("errorMessage", None), 
                 textMessage.get("body", None)))
             conn.commit()
             #for row in c.execute("select * from text_messages"):
-            #    print(row)
+            #    logging.info(row)
+        finally:
+            conn.close()
+
+    def update_text_message_status(self, sid, status, statusMessage=None):
+        if sid is None or status is None:
+            raise ValueError("Unable to update message to '{}'' because some values were missing for sid: '{}'".format(status, sid))
+
+        conn = self.create_connection()
+        try:
+            c = conn.cursor()
+            update = ("UPDATE text_messages SET status = ?, status_message = ? WHERE sid = ?")
+            c.execute(update, (status, statusMessage, sid,))
+            conn.commit()
+            for row in c.execute("select * from text_messages WHERE sid = ?", (sid,)):
+                logging.info('updated: {}'.format(row))
         finally:
             conn.close()
 
     def find_messages(self, dateFrom):
-        print("Selecting from: {}".format(dateFrom))
+        logging.debug("Selecting from: {}".format(dateFrom))
         conn = self.create_connection()
         conn.row_factory = sqlite3.Row
         try:
@@ -98,6 +115,7 @@ class Database:
                 "phoneTo": row["phone_to"],
                 "direction": row["direction"],
                 "status": row["status"],
+                "statusMessage": row["status_message"],
                 "errorCode": row["error_code"],
                 "errorMessage": row["error_message"],
                 "body": row["body"]
@@ -117,6 +135,8 @@ class Database:
             insert = ("INSERT INTO door_lock (id, locked_at) VALUES (1, ?)")
             c.execute(insert, (lockedAt,))
             conn.commit()
+        except sqlite3.IntegrityError:
+            raise ValueError('Door lock already exists')
         finally:
             conn.close()
 
@@ -127,8 +147,6 @@ class Database:
             delete = ("DELETE FROM door_lock")
             c.execute(delete)
             conn.commit()
-            for row in c.execute("DELETE FROM door_lock"):
-                print(row)
         finally:
             conn.close()
 
@@ -186,6 +204,7 @@ class Database:
         if code is None: raise ValueError('Unable to insert challenge, no code provided')
         if textMessageSid is None: raise ValueError('Unable to insert challenge, no textMessageSid provided')
 
+        logging.debug("insert_door_challenge - code: {}, textMessageSid:{}, challengedAt:{}".format(code, textMessageSid, challengedAt))
         conn = self.create_connection()
         try:
             c = conn.cursor()
