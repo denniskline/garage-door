@@ -1,6 +1,6 @@
 import datetime
 import logging
-#from twilio.rest import TwilioRestClient
+from twilio.rest import TwilioRestClient
 from .exception import NetworkDownException
 
 class Sms:
@@ -10,7 +10,7 @@ class Sms:
         self.account_sid = account_sid
         self.auth_token = auth_token
         self.account_phone_number = account_phone_number
-        #self.twilioRestClient = TwilioRestClient(self.account_sid, self.auth_token)
+        self.twilioRestClient = TwilioRestClient(self.account_sid, self.auth_token)
         pass
 
     def send(self, toPhoneNumber, message):
@@ -53,10 +53,15 @@ class Sms:
         messages = []
         try:
             logging.debug('calling twilio')
-            #messages = TwilioClient.messages.list(date_sent=datetime.datetime.utcnow())
+            messages = self.twilioRestClient.messages.list(date_sent=datetime.datetime.utcnow())
+            #for message in messages:
+            #    print("twilio message: {}".format(message)
+
+            #return (m for m in messages if m.get("status", None) == 'received')
         except Exception as e:
             raise NetworkDownException('Unable to call twilio to get list of messages from: {}'.format(dateSince)) from e
 
+        messages = []
         #messages.append({'sid': '30_mins', 'body': 'Open', 'status': 'received', 'phoneFrom': '15551112222', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=30)})
         #messages.append({'sid': '5_hours', 'body': 'Close', 'status': 'received', 'phoneFrom': '15551112222', 'sentAt':  datetime.datetime.now() - datetime.timedelta(hours=5)})
         #messages.append({'sid': '123', 'body': 'Close', 'status': 'received', 'phoneFrom': '15551113333', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=15)})
@@ -75,8 +80,8 @@ class Sms:
         messages.append({'sid': '22-lock', 'body': 'Lock', 'status': 'received', 'phoneFrom': '15551113333', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=12)})
         messages.append({'sid': '3-open', 'body': 'Open', 'status': 'received', 'phoneFrom': '15551113333', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=11)})
         messages.append({'sid': '4-unlock', 'body': 'Unlock', 'status': 'received', 'phoneFrom': '15551113333', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=10)})
-        messages.append({'sid': '5-open', 'body': 'Open', 'status': 'received', 'phoneFrom': '15551113333', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=9)})
-        messages.append({'sid': '6-ignore-me', 'body': 'This is just an arbitrary text', 'status': 'received', 'phoneFrom': '15551113333', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=9)})
+        #messages.append({'sid': '5-open', 'body': 'Open', 'status': 'received', 'phoneFrom': '15551113333', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=9)})
+        #messages.append({'sid': '6-ignore-me', 'body': 'This is just an arbitrary text', 'status': 'received', 'phoneFrom': '15551113333', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=9)})
 
         # only messages that have a status of 'received' are allowed to be returned.  received == On inbound messages only. The inbound message was received by one of your Twilio numbers.
         return (m for m in messages if m.get("status", None) == 'received')

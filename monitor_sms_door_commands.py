@@ -23,7 +23,9 @@ config = SafeConfigParser(os.environ)
 config.read('conf/door.ini')
 appConfig = ApplicationConfiguration(config)
 
-print('environment variable in ini test: {}'.format(appConfig.get('env.var.in.ini.test')))
+accountConfig = SafeConfigParser(os.environ)
+accountConfig.read('conf/account-settings.ini')
+appAccountConfig = ApplicationConfiguration(accountConfig)
 
 # Setup logger
 logging.basicConfig(format='%(asctime)s - %(name)s -  %(levelname)s - %(message)s', 
@@ -32,7 +34,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s -  %(levelname)s - %(message)
 # Instantiate all the required modules
 az = Authorization(appConfig.get('sms.door.command.allowed.phonenumbers'))
 db = Database(appConfig.get('app.database.file'))
-sms = Sms(db, appConfig.get('sms.account.id'), appConfig.get('sms.account.token'), appConfig.get('sms.account.phone.number'))
+sms = Sms(db, appAccountConfig.get('sms.account.id'), appAccountConfig.get('sms.account.token'), appAccountConfig.get('sms.account.phone.number'))
 pi = Pi()
 email = Email(appConfig.get('door.email.address'), appConfig.get('door.email.pword'))
 challenge = Challenge(appConfig, db, sms, email)
