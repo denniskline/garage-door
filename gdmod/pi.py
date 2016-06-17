@@ -1,5 +1,6 @@
 import time
 import logging
+import random
 
 class Pi:
 
@@ -21,7 +22,8 @@ class Pi:
         #time.sleep(1) # Garage door takes N seconds to close, wait a bit for that to finish
 
     def is_door_closed(self):
-        return self.isDoorClosed
+        return True if random.randrange(0,2) == 1 else False
+        #return self.isDoorClosed
 
     def blink_green_light(self, interval=None):
         interval = interval if interval else 1
@@ -77,3 +79,5 @@ class Pi:
     def is_red_light_on(self):
         return self.redLightOn
 
+    def take_picture(self):
+        logging.debug('taking a picture')

@@ -11,9 +11,12 @@ class Email:
         self.gmailPassword = gmailPassword
         pass
 
-    def send(self, emailTo, subject, message):
-        logging.info("Attempting to email to {}, from {}, subject '{}' with message: {}".format(emailTo, self.gmailUsername, subject, message))
+    def send(self, recipients, subject, messageContent):
+        logging.info("Attempting to email to {}, from {}, subject '{}' with messageContent: {}".format(recipients, self.gmailUsername, subject, messageContent))
         failure = None
+
+        if not isinstance(recipients, (list, tuple)):
+            recipients = [recipients]
 
         # Try to send the email.  If sending fails, retry 5 times before giving up
         for x in range(0, 5):
@@ -22,20 +25,26 @@ class Email:
 
             try:
                 #server = smtplib.SMTP('smtp.gmail.com:587')
+                #server.set_debuglevel(1)
+                #server.ehlo()
                 #starttls = server.starttls()
+                #server.ehlo()
                 #login = server.login(self.gmailUsername, self.gmailPassword)
-                garageMessage = MIMEMultipart()
-                garageMessage['Subject'] = "GARAGE: {}".format(subject)
-                garageMessage['From'] = self.gmailUsername
-                garageMessage['To'] = emailTo
-                #sendit = server.sendmail(emailFrom, emailTo, garageMessage.as_string())
+                
+                emailMessage = MIMEMultipart("alternative")
+                emailMessage['Subject'] = "GARAGE: {}".format(subject)
+                emailMessage['From'] = self.gmailUsername
+                emailMessage['To'] = ", ".join(recipients)
+                htmlMessagePart = MIMEText(messageContent, "html")
+                emailMessage.attach(htmlMessagePart)
+                #sendit = server.sendmail(emailFrom, emailTo, emailMessage.as_string())
                 #server.quit()
-                logging.info("Sent {}, {}, {}".format(garageMessage['Subject'], garageMessage['From'], garageMessage['To']))
+                logging.info("Sent {}, {}, {}".format(emailMessage['Subject'], emailMessage['From'], emailMessage['To']))
 
                 # Success: so return out of retry loop
                 return
             except Exception as e:
-                logging.warn("Failed on attempt {} of sending message: {}, {}, {} Because: {}".format(x, subject, message, emailTo, e))
+                logging.warn("Failed on attempt {} of sending messageContent: {}, {}, {} Because: {}".format(x, subject, messageContent, recipients, e))
                 failure = e
 
         raise failure

@@ -1,6 +1,6 @@
 import datetime
 import logging
-from twilio.rest import TwilioRestClient
+#from twilio.rest import TwilioRestClient
 from .exception import NetworkDownException
 
 class Sms:
@@ -10,7 +10,7 @@ class Sms:
         self.account_sid = account_sid
         self.auth_token = auth_token
         self.account_phone_number = account_phone_number
-        self.twilioRestClient = TwilioRestClient(self.account_sid, self.auth_token)
+        #self.twilioRestClient = TwilioRestClient(self.account_sid, self.auth_token)
         pass
 
     def send(self, toPhoneNumber, message):
@@ -50,10 +50,9 @@ class Sms:
 
 
     def __list_all(self, dateSince):
-        messages = []
         try:
             logging.debug('calling twilio')
-            messages = self.twilioRestClient.messages.list(date_sent=datetime.datetime.utcnow())
+            #messages = self.twilioRestClient.messages.list(date_sent=datetime.datetime.utcnow())
             #for message in messages:
             #    print("twilio message: {}".format(message)
 

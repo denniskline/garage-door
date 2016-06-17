@@ -1,35 +1,65 @@
 #!/usr/bin/python3
 
-# Basic imports
-from configparser import SafeConfigParser
 import os
 import datetime
-from operator import itemgetter
+import time
 import logging
-
-# Library imports
+import getopt
+import sys
 from gdmod import ApplicationConfiguration
 from gdmod import Database
 from gdmod import Pi
 
-# Pull in the configuration for this application
-config = SafeConfigParser(os.environ)
-config.read('conf/door.ini')
-appConfig = ApplicationConfiguration(config)
+def main():
+    # Check command options to see if a custom configuration directory was supplied
+    configDir = os.path.abspath(get_config_directory(sys.argv[1:], './conf'))
+    if not os.path.isdir(configDir):
+        raise ValueError('No such configuration directory exists: {}'.format(configDir))
 
-print('environment variable in ini test: {}'.format(appConfig.get('env.var.in.ini.test')))
+    # Read in the configurations
+    config = ApplicationConfiguration(configDir, ['door.ini', 'account-settings.ini'])
 
-# Setup logger
-logging.basicConfig(format='%(asctime)s - %(name)s -  %(levelname)s - %(message)s', 
-    filename=appConfig.get('sms.door.log.file.directory') + '/' + appConfig.get('sms.door.log.file.name'), level=logging.INFO)
+    # Setup logger
+    logging.basicConfig(format='%(asctime)s - %(name)s -  %(levelname)s - %(message)s', 
+        filename=config.get('door.state.change.log.file.directory') + '/' + config.get('door.state.change.log.file.name'), level=logging.INFO)
 
-# Instantiate all the required modules
-db = Database(appConfig.get('app.database.file'))
-pi = Pi()
+   # Instantiate all the required modules
+    db = Database(config.get('app.database.file'))
+    pi = Pi()
 
-try:
+    # Watch for any changes to the state of the door.  At least until True stops being True
+    while True:
+        try:
+            doorState = 'closed' if pi.is_door_closed() else 'open'
+            latestStateHistory = db.find_door_state_history_latest()
+            logging.debug('latestStateHistory: {}'.format(latestStateHistory))
 
-except:
-    logging.error('Failure', exc_info=True)
-finally:
-    logging.info('done')
+            # If a state change is detected, persist the new state
+            if latestStateHistory is None or doorState != latestStateHistory.get('state', None):
+                logging.info("Setting door state to: {}".format(doorState))
+                db.insert_door_state_history(doorState, datetime.datetime.now())
+                take_some_pictures(pi, 5)
+
+        except:
+            logging.error('Failure while monitoring door state change', exc_info=True)
+            pass
+
+        # Pause a little before checking again
+        time.sleep(2)
+
+# Take a series of pictures with a small pause so we can 'record' the view of the door state change
+def take_some_pictures(pi, numPhotos):
+    for x in range(0, numPhotos):
+        pi.take_picture()
+        time.sleep(2)
+
+def get_config_directory(args, default):
+    options, remainder = getopt.getopt(args, 'c:', ['configdirectory=',])
+
+    for opt, arg in options:
+        if opt in ('-c', '--configdirectory'):
+            return arg
+    return default
+
+if __name__ == "__main__":
+    main()

@@ -1,13 +1,10 @@
 #!/usr/bin/python3
 
-# Basic imports
-from configparser import SafeConfigParser
 import os
 import datetime
-from operator import itemgetter
 import logging
-
-# Library imports
+import getopt
+import sys
 from gdmod import ApplicationConfiguration
 from gdmod import Authorization
 from gdmod import Challenge
@@ -18,62 +15,68 @@ from gdmod import Pi
 from gdmod import Sms
 from gdmod import GarageDoorCommand
 
-# Pull in the configuration for this application
-config = SafeConfigParser(os.environ)
-config.read('conf/door.ini')
-appConfig = ApplicationConfiguration(config)
+def main():
+    # Check command options to see if a custom configuration directory was supplied
+    configDir = os.path.abspath(get_config_directory(sys.argv[1:], './conf'))
+    if not os.path.isdir(configDir):
+        raise ValueError('No such configuration directory exists: {}'.format(configDir))
 
-accountConfig = SafeConfigParser(os.environ)
-accountConfig.read('conf/account-settings.ini')
-appAccountConfig = ApplicationConfiguration(accountConfig)
+    # Read in the configurations
+    config = ApplicationConfiguration(configDir, ['door.ini', 'account-settings.ini'])
 
-# Setup logger
-logging.basicConfig(format='%(asctime)s - %(name)s -  %(levelname)s - %(message)s', 
-    filename=appConfig.get('sms.door.command.log.file.directory') + '/' + appConfig.get('sms.door.command.log.file.name'), level=logging.INFO)
+    # Setup logger
+    logging.basicConfig(format='%(asctime)s - %(name)s -  %(levelname)s - %(message)s', 
+        filename=config.get('sms.door.command.log.file.directory') + '/' + config.get('sms.door.command.log.file.name'), level=logging.INFO)
 
-# Instantiate all the required modules
-az = Authorization(appConfig.get('sms.door.command.allowed.phonenumbers'))
-db = Database(appConfig.get('app.database.file'))
-sms = Sms(db, appAccountConfig.get('sms.account.id'), appAccountConfig.get('sms.account.token'), appAccountConfig.get('sms.account.phone.number'))
-pi = Pi()
-email = Email(appConfig.get('door.email.address'), appConfig.get('door.email.pword'))
-challenge = Challenge(appConfig, db, sms, email)
-command = GarageDoorCommand(db, challenge, pi, sms, email)
+    # Instantiate all the required modules
+    az = Authorization(config.get('sms.door.command.allowed.phonenumbers'))
+    db = Database(config.get('app.database.file'))
+    sms = Sms(db, config.get('sms.account.id'), config.get('sms.account.token'), config.get('sms.account.phone.number'))
+    pi = Pi()
+    email = Email(config.get('door.email.address'), config.get('door.email.pword'))
+    challenge = Challenge(config, db, sms, email)
+    command = GarageDoorCommand(db, challenge, pi, sms, email)
 
-try:
-    # Visual indicator that work is being performed
-    pi.blink_green_light(.5)
+    try:
+        # Visual indicator that work is being performed
+        pi.blink_green_light(.5)
 
-    # fetch all the new messages that need processing
-    messages = sms.list()
+        # fetch all the new messages that need processing
+        smsMessages = sms.list()
 
-    # Handle contradictory commands: Open followed by a Close.  Only process the last state change command
-    # This is hard to do due to challenges.  If every message is a challenge response that could lead to an open or close then ????
-    #lastOpenOrClose = [d for d in messages if get_message_body(d) == "close" or get_message_body(d) == "open"][-1]
-    #print('found an open or close message: {}'.format(lastOpenOrClose))
+        for message in smsMessages: 
 
-    for message in messages: 
+            # regardless of any error or invalid command, save off the message for audit trail and so it is never reprocessed
+            db.insert_text_message(message) 
 
-        # regardless of any error or invalid command, save off the message for audit trail and so it is never reprocessed
-        db.insert_text_message(message) 
+            # Make sure that this message is authorized
+            if not az.is_authorized(message):
+                logging.warn('Unauthorized attempt detected: {}'.format(message))
+                db.update_text_message_status(message.get('sid'), 'unauthorized')
+                continue
 
-        # Make sure that this message is authorized
-        if not az.is_authorized(message):
-            logging.warn('Unauthorized attempt detected: {}'.format(message))
-            db.update_text_message_status(message.get('sid'), 'unauthorized')
-            continue
+            command.execute(message)
 
-        command.execute(message)
+        # Clear any warn/error indicators
+        pi.off_yellow_light()
+        pi.off_red_light()
+    except NetworkDownException as nde:
+        logging.error('Unable to reach network, cannot process sms command messages', exc_info=True)
+        pi.blink_yellow_light(.5)
+    except:
+        logging.error('Failure processing sms command messages', exc_info=True)
+        pi.blink_red_light(.5)
+    finally:
+        # Toggle off the visual indicator that work is being performed
+        pi.off_green_light()
 
-    # Clear any warn/error indicators
-    pi.off_yellow_light()
-    pi.off_red_light()
-except NetworkDownException as nde:
-    logging.error('Unable to reach network, cannot process messages', exc_info=True)
-    pi.blink_yellow_light(.5)
-except:
-    logging.error('Failure processing messages', exc_info=True)
-    pi.blink_red_light(.5)
-finally:
-    # Toggle off the visual indicator that work is being performed
-    pi.off_green_light()
+def get_config_directory(args, default):
+    options, remainder = getopt.getopt(args, 'c:', ['configdirectory=',])
+
+    for opt, arg in options:
+        if opt in ('-c', '--configdirectory'):
+            return arg
+    return default
+
+if __name__ == "__main__":
+    main()

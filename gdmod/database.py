@@ -181,17 +181,32 @@ class Database:
         finally:
             conn.close()
 
-    def find_door_state_histories(self):
+    def find_door_state_histories(self, fromDateTime=None):
         conn = self.create_connection()
         conn.row_factory = sqlite3.Row
 
         try:
             histories = []
             c = conn.cursor()
-            select = ("SELECT * FROM door_state_history")
-            for row in c.execute(select,):
+            select = ("SELECT * FROM door_state_history WHERE changed_at > ?")
+            for row in c.execute(select, (fromDateTime,)):
                 histories.append({"state": row["state"], "changedAt": row["changed_at"]})
             return histories
+        finally:
+            conn.close()
+
+    def find_door_state_history_latest(self):
+        conn = self.create_connection()
+        conn.row_factory = sqlite3.Row
+
+        try:
+            c = conn.cursor()
+            select = ("SELECT * FROM door_state_history ORDER BY changed_at DESC LIMIT 1")
+            c.execute(select)
+            row = c.fetchone()
+            if row is not None:
+                return {"state": row["state"], "changedAt": row["changed_at"]}
+            return None
         finally:
             conn.close()
 

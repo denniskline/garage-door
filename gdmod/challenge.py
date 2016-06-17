@@ -1,6 +1,7 @@
 import string
 import random
 import datetime
+import time
 import logging
 
 class Challenge:
@@ -36,12 +37,15 @@ class Challenge:
         self.db.insert_door_challenge(code, message.get('sid'))
 
         phoneNumber = message.get('phoneFrom')
-        channel = self.config.get(phoneNumber, 'sms.door.command.challenge.via.channel')
+        channel = 'email' #self.config.get(phoneNumber, 'sms.door.command.challenge.via.channel')
+        print('Challenge channel: {}'.format(channel))
 
         # If this user wants to recieve challenges via email, then send an email
         if 'email' == channel:
             emailAddress = self.config.get(phoneNumber, 'user.email.address')
-            self.email.send(emailAddress, 'Garage Challenge', code)
+            userName = self.config.get(phoneNumber, 'user.name')
+            emailMessage = self.__build_code_email_message(userName, code)
+            self.email.send(emailAddress, 'Garage Challenge', emailMessage)
 
         # Or send it via sms text
         else:
@@ -80,3 +84,42 @@ class Challenge:
             logging.warn("Unable to determine timeframe, defaulting to challenge is within: True")
 
         return isWithinRange;
+
+    def __build_code_email_message(self, userName, code):
+        html = """\
+        <html>
+          <head>
+            <style>
+                body {
+                    background-color: #EEEEEE;
+                    color: #153643; 
+                    font-family: Arial, 
+                    sans-serif; 
+                    font-size: 16px; 
+                    line-height: 20px;
+                }
+
+                div {
+                    background-color: #FFFFFF;
+                    border-radius: 25px;
+                    border: 2px solid #CCCCCC;
+                    padding: 20px;
+                    box-shadow: 10px 10px 5px #b7b7b7;
+                }
+            </style>
+          </head>
+          <body>
+              <div>
+              Hello <i>%s</i>,<p>
+              Your challenge code is:<br><br>
+              <p style="font-weight: bold; font-size: larger">%s</p>
+              <br>
+              You have 15 minutes from %s before it expires.<p>
+              Sincerly,<br>
+              <i>The Garage Door</i>
+              </div>
+          </body>
+        </html>
+        """
+        # time could be a little off, but should be pretty close
+        return html % (userName, code, datetime.datetime.now().strftime("%b %d (%A) %I:%M%p"))
