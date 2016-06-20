@@ -24,21 +24,22 @@ class Email:
                 time.sleep(5) # Wait 5 seconds if this is a retry
 
             try:
-                #server = smtplib.SMTP('smtp.gmail.com:587')
+                server = smtplib.SMTP('smtp.gmail.com:587')
                 #server.set_debuglevel(1)
-                #server.ehlo()
-                #starttls = server.starttls()
-                #server.ehlo()
-                #login = server.login(self.gmailUsername, self.gmailPassword)
+                server.ehlo()
+                starttls = server.starttls()
+                server.ehlo()
+                login = server.login(self.gmailUsername, self.gmailPassword)
                 
+                emailTo = ", ".join(recipients)
                 emailMessage = MIMEMultipart("alternative")
                 emailMessage['Subject'] = "GARAGE: {}".format(subject)
                 emailMessage['From'] = self.gmailUsername
-                emailMessage['To'] = ", ".join(recipients)
+                emailMessage['To'] = emailTo
                 htmlMessagePart = MIMEText(messageContent, "html")
                 emailMessage.attach(htmlMessagePart)
-                #sendit = server.sendmail(emailFrom, emailTo, emailMessage.as_string())
-                #server.quit()
+                sendit = server.sendmail(self.gmailUsername, emailTo, emailMessage.as_string())
+                server.quit()
                 logging.info("Sent {}, {}, {}".format(emailMessage['Subject'], emailMessage['From'], emailMessage['To']))
 
                 # Success: so return out of retry loop
