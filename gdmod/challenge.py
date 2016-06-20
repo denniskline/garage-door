@@ -32,13 +32,14 @@ class Challenge:
         if message is None or 'phoneFrom' not in message: raise ValueError('Message must contain a phoneFrom, unable to create challenge')
         
         code = self.__generate_challenge_code()
+        logging.debug("generated code: {}".format(code))
 
         # Relate the challenge code to the message sid and persist it   
         self.db.insert_door_challenge(code, message.get('sid'))
 
         phoneNumber = message.get('phoneFrom')
-        channel = 'email' #self.config.get(phoneNumber, 'sms.door.command.challenge.via.channel')
-        print('Challenge channel: {}'.format(channel))
+        channel = self.config.get(phoneNumber, 'sms.door.command.challenge.via.channel', 'email')
+        logging.debug('[create]Challenge channel: {}'.format(channel))
 
         # If this user wants to recieve challenges via email, then send an email
         if 'email' == channel:

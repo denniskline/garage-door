@@ -27,25 +27,30 @@ def main():
     db = Database(config.get('app.database.file'))
     email = Email(config.get('door.email.address'), config.get('door.email.pword'))
 
-    try:
-        logging.info('Executing reports')
+    # Run the report with 5 retries if there is a failure
+    for x in range(0, 5):
 
-        # Find all door histories in the past 24 hours
-        now = datetime.datetime.now()
-        yesterday = now - datetime.timedelta(days=1)
-        histories = db.find_door_state_histories(yesterday)
+        try:
+            logging.info('Executing reports')
 
-        # Create the report
-        reportMessage = create_histories_report(histories, now, yesterday)
+            # Find all door histories in the past 24 hours
+            now = datetime.datetime.now()
+            yesterday = now - datetime.timedelta(days=1)
+            histories = db.find_door_state_histories(yesterday)
 
-        # Send the report to all the configured user addresses
-        email.send(find_user_email_addresses(config), 
-            'Garage Door Report: {} - {}'.format(yesterday.strftime("%b %d (%A) %I:%M%p"), datetime.datetime.now().strftime("%b %d (%A) %I:%M%p")), 
-            reportMessage)
-        
-    except:
-        logging.error('Failure exeucting reports', exc_info=True)
-        pass
+            # Create the report
+            reportMessage = create_histories_report(histories, now, yesterday)
+
+            # Send the report to all the configured user addresses
+            email.send(find_user_email_addresses(config), 
+                'Garage Door Report: {} - {}'.format(yesterday.strftime("%b %d (%A) %I:%M%p"), datetime.datetime.now().strftime("%b %d (%A) %I:%M%p")), 
+                reportMessage)
+
+            return
+        except:
+            logging.error('Failed on attempt {} exeucting daily open/close report'.format(x), exc_info=True)
+            time.sleep(300) # Wait a nice long time before retrying again: it's a daily report, waiting 5 mins is no biggie
+            pass
 
 def create_histories_report(histories, now, yesterday):
     # TODO externalize report css
@@ -53,6 +58,22 @@ def create_histories_report(histories, now, yesterday):
     <html>
       <head>
         <style>
+            body {
+                background-color: #EEEEEE;
+                color: #153643; 
+                font-family: Arial, 
+                sans-serif; 
+                font-size: 16px; 
+                line-height: 20px;
+            }
+
+            div {
+                background-color: #FFFFFF;
+                border-radius: 25px;
+                border: 2px solid #CCCCCC;
+                padding: 20px;
+                box-shadow: 10px 10px 5px #b7b7b7;
+            }
             table { 
                 color: #333;
                 font-family: Helvetica, Arial, sans-serif;
@@ -86,12 +107,12 @@ def create_histories_report(histories, now, yesterday):
       </head>
     """
     
-    body = '<body>\n'
+    body = '<body>\n<div>\n'
     body += '<H3>Garage Door Report: {} - {}</H3>\n'.format(yesterday.strftime("%b %d (%A) %I:%M%p"), datetime.datetime.now().strftime("%b %d (%A) %I:%M%p"))
-    body += '<table><tr><th>Time</th><th>State</th></tr>\n'
+    body += '<table>\n<tr><th>Time</th><th>State</th></tr>\n'
     for history in histories:
         body += '<tr><td>{}</td><td>{}</td></tr>\n'.format(history.get('changedAt').strftime("%b %d %I:%M%p"), history.get('state'))
-    body += '</table></body>'
+    body += '</table>\n</div>\n</body>\n'
 
     footer = '</html>'
 

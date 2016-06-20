@@ -79,6 +79,7 @@ class Sms:
         messages.append({'sid': '22-lock', 'body': 'Lock', 'status': 'received', 'phoneFrom': '15551113333', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=12)})
         messages.append({'sid': '3-open', 'body': 'Open', 'status': 'received', 'phoneFrom': '15551113333', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=11)})
         messages.append({'sid': '4-unlock', 'body': 'Unlock', 'status': 'received', 'phoneFrom': '15551113333', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=10)})
+        messages.append({'sid': '4-diagnostics', 'body': 'Diagnostics', 'status': 'received', 'phoneFrom': '15551113333', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=7)})
         #messages.append({'sid': '5-open', 'body': 'Open', 'status': 'received', 'phoneFrom': '15551113333', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=9)})
         #messages.append({'sid': '6-ignore-me', 'body': 'This is just an arbitrary text', 'status': 'received', 'phoneFrom': '15551113333', 'sentAt':  datetime.datetime.now() - datetime.timedelta(minutes=9)})
 

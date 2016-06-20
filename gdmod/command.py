@@ -1,10 +1,12 @@
 import time
+from datetime import timedelta
 import logging
 from .exception import CommandIgnoredException
 
 class GarageDoorCommand:
 
-    def __init__(self, db, challenge, pi, sms, email):
+    def __init__(self, config, db, challenge, pi, sms, email):
+        self.config = config
         self.db = db
         self.challenge = challenge
         self.pi = pi
@@ -14,6 +16,7 @@ class GarageDoorCommand:
         # All the accepted commands.  These must appear as the body of a text message (case insensitive).
         self.commands = {
             'close': CloseCommand(self.pi, self.db),
+            'diagnostics': DiagnosticsCommand(self.config, self.pi, self.db, self.email),
             'help': HelpCommand(self.sms),
             'lock': LockCommand(self.db, self.sms),
             'open': OpenCommand(self.pi, self.db),
@@ -34,17 +37,18 @@ class GarageDoorCommand:
         if self.challenge.is_challenge_required(messageBody, command):
             self.challenge.create(message)
 
-        # Unable to determine what the command action is, which means it could be a challenge response
-        elif command is None:
-            challengedMessage = self.challenge.fetch_message(messageBody.upper())
-            if challengedMessage is not None:
-                logging.info("Found a challenged message: {}".format(challengedMessage))
-                messageBody = self.__get_message_body(challengedMessage)
-                command = commands.get(messageBody, None)
-                message = challengedMessage # Switch to the challenge message so we know what command was originally attempted
+        else:
+            # Unable to determine what the command action is, which means it could be a challenge response
+            if command is None:
+                challengedMessage = self.challenge.fetch_message(messageBody.upper())
+                if challengedMessage is not None:
+                    logging.info("Found a challenged message: {}".format(challengedMessage))
+                    messageBody = self.__get_message_body(challengedMessage)
+                    command = commands.get(messageBody, None)
+                    message = challengedMessage # Switch to the challenge message so we know what command was originally attempted
 
-        # run this message command
-        self.__run_command(command, message)
+            # run this message command
+            self.__run_command(command, message)
 
     def __run_command(self, command, message):
         if command is not None:
@@ -167,6 +171,32 @@ class StatusCommand:
 
     def is_ack_success(self):
         return False
+
+class DiagnosticsCommand:
+
+    def __init__(self, config, pi, db, email):
+        self.config = config
+        self.pi = pi
+        self.db = db
+        self.email = email
+        pass
+
+    def handle(self, message):
+        logging.info("Handling command to diagnostics")
+        state = "closed" if self.pi.is_door_closed() else "open"
+        uptime = self.find_uptime()
+        diagnosticMessage = ("Door: {}\nUptime: {}\nNetwork light on: {}\nError light on: {}\n".format(state, uptime, self.pi.is_yellow_light_on(), self.pi.is_red_light_on()))
+ 
+        # Send the diagnostic report to all the configured user addresses
+        self.email.send(self.config.get(message.get('phoneFrom'), 'user.email.address'), 'Diagnostics', diagnosticMessage)
+
+    def is_ack_success(self):
+        return False
+
+    def find_uptime(self):
+        with open('/proc/uptime', 'r') as f:
+            uptime_seconds = float(f.readline().split()[0])
+            return str(timedelta(seconds = uptime_seconds))        
 
 class PhotoCommand:
 

@@ -20,9 +20,10 @@ class ApplicationConfiguration:
         # Look for the first occurence of this property in the first configuration file that was read in
         for config in self.configurations:
             try:
-                print('Looking in section {} for {}'.format(section, property))
+                #print('Looking in section "{}" for "{}"'.format(section, property))
                 return config.get(section, property)
-            except:
+            except Exception as e:
+                #print("There was an error: {}".format(e))
                 pass
 
         return default

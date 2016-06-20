@@ -35,7 +35,7 @@ def main():
     pi = Pi()
     email = Email(config.get('door.email.address'), config.get('door.email.pword'))
     challenge = Challenge(config, db, sms, email)
-    command = GarageDoorCommand(db, challenge, pi, sms, email)
+    command = GarageDoorCommand(config, db, challenge, pi, sms, email)
 
     try:
         # Visual indicator that work is being performed
