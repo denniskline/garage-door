@@ -44,7 +44,7 @@ class GarageDoorCommand:
                 if challengedMessage is not None:
                     logging.info("Found a challenged message: {}".format(challengedMessage))
                     messageBody = self.__get_message_body(challengedMessage)
-                    command = commands.get(messageBody, None)
+                    command = self.commands.get(messageBody, None)
                     message = challengedMessage # Switch to the challenge message so we know what command was originally attempted
 
             # run this message command
