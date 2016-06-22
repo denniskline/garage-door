@@ -43,6 +43,21 @@ class Database:
         finally:
             conn.close()
 
+    def destroy_database(self):
+        conn = self.create_connection()
+        try:
+            c = conn.cursor()
+
+            c.execute("DROP TABLE IF EXISTS text_messages")
+            c.execute("DROP TABLE IF EXISTS door_lock")
+            c.execute("DROP TABLE IF EXISTS door_state_history")
+            c.execute("DROP TABLE IF EXISTS door_challenge")
+
+            conn.commit()
+        finally:
+            conn.close()
+
+
     # ------------------------------------------------------------------------------------------------------------
     # text_messages
     # ------------------------------------------------------------------------------------------------------------
@@ -70,7 +85,7 @@ class Database:
                 textMessage.get("body", None)))
             conn.commit()
             #for row in c.execute("select * from text_messages"):
-            #    logging.info(row)
+            #    print('[insert_text_message] text_messages: {}'.format(row))
         finally:
             conn.close()
 
@@ -250,6 +265,11 @@ class Database:
         conn.row_factory = sqlite3.Row
         try:
             c = conn.cursor()
+            #for row in c.execute("select * from text_messages"):
+            #    print('[find_door_challenge] text_messages: {}'.format(row))
+            #for row in c.execute("select * from door_challenge"):
+            #    print('[find_door_challenge] door_challenge: {}'.format(row))
+
             select = ("SELECT tm.* FROM text_messages tm INNER JOIN door_challenge dc ON dc.text_message_sid = tm.sid WHERE dc.code = ? and dc.challenged_at > ?")
             c.execute(select, (code, challengedAt,))
             row = c.fetchone()

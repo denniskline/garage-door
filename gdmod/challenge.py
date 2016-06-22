@@ -15,8 +15,8 @@ class Challenge:
         self.chars = string.ascii_uppercase + string.digits
         pass
 
-    def is_challenge_required(self, commandName, command):
-        if command is None or commandName is None:
+    def is_challenge_required(self, commandName):
+        if commandName is None:
             return False
 
         timeFrame = self.config.get('DEFAULT', 'sms.door.command.challenge.timeframe')
@@ -51,6 +51,8 @@ class Challenge:
         # Or send it via sms text
         else:
             self.sms.send(phoneNumber, code)
+
+        return code
 
     def fetch_message(self, code):
         logging.debug("Attempting to fetch a text message using challenge code: {}".format(code))
@@ -88,39 +90,11 @@ class Challenge:
 
     def __build_code_email_message(self, userName, code):
         html = """\
-        <html>
-          <head>
-            <style>
-                body {
-                    background-color: #EEEEEE;
-                    color: #153643; 
-                    font-family: Arial, 
-                    sans-serif; 
-                    font-size: 16px; 
-                    line-height: 20px;
-                }
-
-                div {
-                    background-color: #FFFFFF;
-                    border-radius: 25px;
-                    border: 2px solid #CCCCCC;
-                    padding: 20px;
-                    box-shadow: 10px 10px 5px #b7b7b7;
-                }
-            </style>
-          </head>
-          <body>
-              <div>
               Hello <i>%s</i>,<p>
               Your challenge code is:<br><br>
               <p style="font-weight: bold; font-size: larger">%s</p>
               <br>
-              You have 15 minutes from %s before it expires.<p>
-              Sincerly,<br>
-              <i>The Garage Door</i>
-              </div>
-          </body>
-        </html>
-        """
+              You have approximately until %s before it expires.
+            """
         # time could be a little off, but should be pretty close
-        return html % (userName, code, datetime.datetime.now().strftime("%b %d (%A) %I:%M%p"))
+        return html % (userName, code, (datetime.datetime.now() + datetime.timedelta(minutes=15)).strftime("%I:%M%p (today %b %d)"))

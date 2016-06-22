@@ -1,6 +1,6 @@
 from .config import ApplicationConfiguration
 from .database import Database
-from .sms import Sms
+#from .sms import Sms
 from .pi import Pi
 from .email import Email
 from .challenge import Challenge

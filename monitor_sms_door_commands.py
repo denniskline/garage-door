@@ -33,7 +33,7 @@ def main():
     db = Database(config.get('app.database.file'))
     sms = Sms(db, config.get('sms.account.id'), config.get('sms.account.token'), config.get('sms.account.phone.number'))
     pi = Pi()
-    email = Email(config.get('door.email.address'), config.get('door.email.pword'))
+    email = Email(config.get('door.email.address'), config.get('door.email.pword'), config.get_conf_file_contents('email-style.css'))
     challenge = Challenge(config, db, sms, email)
     command = GarageDoorCommand(config, db, challenge, pi, sms, email)
 
@@ -46,7 +46,7 @@ def main():
 
         for message in smsMessages: 
 
-            # regardless of any error or invalid command, save off the message for audit trail and so it is never reprocessed
+            # regardless of any error or invalid command, save off the message for audit trail so it is never reprocessed
             db.insert_text_message(message) 
 
             # Make sure that this message is authorized

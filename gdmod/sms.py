@@ -1,9 +1,9 @@
 import datetime
 import logging
-from twilio.rest import TwilioRestClient
 from .exception import NetworkDownException
 
 class Sms:
+    from twilio.rest import TwilioRestClient
 
     def __init__(self, db, account_sid, auth_token, account_phone_number):
         self.db = db
@@ -33,7 +33,6 @@ class Sms:
         # Assume network down.  Could be other things, but most likely this
         raise NetworkDownException('Unable to call twilio to send to {} message {}'.format(toPhoneNumber, message)) from failure
 
-
     def list(self, dateSince=None):
         dateSince = dateSince if dateSince else datetime.datetime.now() - datetime.timedelta(minutes=15)
         logging.info("Attempting to list all unprocessed messages since: {}".format(dateSince))
@@ -48,14 +47,12 @@ class Sms:
         messages.sort(key=lambda k: (k['sentAt'] is None, k['sentAt'] == datetime.datetime.now(), k['sentAt']))
         return messages
 
-
     def __list_all(self, dateSince):
         messages = []
         try:
             logging.info('calling twilio')
             twilioMessages = self.twilioRestClient.messages.list(date_sent=datetime.datetime.utcnow())
             for message in twilioMessages:
-                # This might be redundant, but it conforms nicer to the dict used throughout
                 messages.append({
                     "sid": message.sid,
                     "phoneFrom": message.from_[1:], # remove the +

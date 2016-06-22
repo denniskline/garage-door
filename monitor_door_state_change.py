@@ -38,7 +38,10 @@ def main():
             if latestStateHistory is None or doorState != latestStateHistory.get('state', None):
                 logging.info("Setting door state to: {}".format(doorState))
                 db.insert_door_state_history(doorState, datetime.datetime.now())
-                take_some_pictures(pi, 5)
+                
+                # When to door is opening, take a few pictures
+                if doorState == 'open':
+                    take_some_pictures(pi, 5)
 
         except:
             logging.error('Failure while monitoring door state change', exc_info=True)

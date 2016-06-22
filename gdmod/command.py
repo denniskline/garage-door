@@ -1,7 +1,8 @@
 import time
-from datetime import timedelta
+import datetime
 import logging
 from .exception import CommandIgnoredException
+import os
 
 class GarageDoorCommand:
 
@@ -20,7 +21,7 @@ class GarageDoorCommand:
             'help': HelpCommand(self.sms),
             'lock': LockCommand(self.db, self.sms),
             'open': OpenCommand(self.pi, self.db),
-            'photo': PhotoCommand(self.pi, self.email),
+            'photo': PhotoCommand(self.config.get('door.media.photo.directory'), self.pi, self.email),
             'status': StatusCommand(self.pi, self.db, self.sms),
             'unlock': UnlockCommand(self.db, self.sms),
         }
@@ -34,7 +35,7 @@ class GarageDoorCommand:
         command = self.commands.get(messageBody, None)
 
         # Does this command require a challenge to be issued?
-        if self.challenge.is_challenge_required(messageBody, command):
+        if command is not None and self.challenge.is_challenge_required(messageBody):
             self.challenge.create(message)
 
         else:
@@ -99,7 +100,6 @@ class OpenCommand:
             raise CommandIgnoredException('Door locked, unable to open')
         else:
             self.pi.open_door()
-            #self.db.insert_door_state_history('open')
 
     def is_ack_success(self):
         return True
@@ -117,7 +117,6 @@ class CloseCommand:
             raise CommandIgnoredException("Door already closed")
         else:
             self.pi.close_door()
-            #self.db.insert_door_state_history('close')
 
     def is_ack_success(self):
         return True
@@ -185,7 +184,7 @@ class DiagnosticsCommand:
         logging.info("Handling command to diagnostics")
         state = "closed" if self.pi.is_door_closed() else "open"
         uptime = self.find_uptime()
-        diagnosticMessage = ("Door: {}\nUptime: {}\nNetwork light on: {}\nError light on: {}\n".format(state, uptime, self.pi.is_yellow_light_on(), self.pi.is_red_light_on()))
+        diagnosticMessage = ("Door: {}<br>\nUptime: {}<br>\nNetwork light on: {}<br>\nError light on: {}<br>\n".format(state, uptime, self.pi.is_yellow_light_on(), self.pi.is_red_light_on()))
  
         # Send the diagnostic report to all the configured user addresses
         self.email.send(self.config.get(message.get('phoneFrom'), 'user.email.address'), 'Diagnostics', diagnosticMessage)
@@ -196,18 +195,22 @@ class DiagnosticsCommand:
     def find_uptime(self):
         with open('/proc/uptime', 'r') as f:
             uptime_seconds = float(f.readline().split()[0])
-            return str(timedelta(seconds = uptime_seconds))        
+            return str(datetime.timedelta(seconds = uptime_seconds))        
 
 class PhotoCommand:
 
-    def __init__(self, pi, email):
+    def __init__(self, photoDir, pi, email):
+        self.config = config
         self.pi = pi
         self.email = email
+        self.photoDir = photoDir
         pass
 
     def handle(self, message):
         logging.info("Handling command to photo")
-        # TODO
+
+        dateFolder = ('{}/{}'.format(self.photoDir, datetime.datetime.now().strftime("%Y%m%d")))
+        self.pi.take_picture(dateFolder)
 
     def is_ack_success(self):
         return False
