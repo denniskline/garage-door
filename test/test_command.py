@@ -8,10 +8,10 @@ from gdmod import Challenge
 from gdmod.config import ApplicationConfiguration
 from gdmod import Database
 from gdmod import Pi
+from gdmod import Sms
 from gdmod.exception import CommandIgnoredException
 
 from . import MockEmail
-from . import MockSms
 
 # garage-door> python3 -m unittest test.test_command
 class CommandTest(unittest.TestCase):
@@ -34,11 +34,11 @@ class CommandTest(unittest.TestCase):
                             }
         self.db = Database('./test/test-gd.db')
         self.mockEmail = MockEmail('gd@foo.com', 'gdpwd')
-        self.mockEmail = MockEmail('gd@foo.com', 'gdpwd')
-        self.mockSms = MockSms(self.db, 'foo', 'foo', 'foo')
+        self.sms = Sms(self.db, 'foo', 'foo', 'foo')
+        self.sms.twilioClient.isMock = True
         self.config = ApplicationConfiguration(None, None)
         self.config.configurations.append(self.basicConfig)
-        self.challenge = Challenge(self.config, self.db, self.mockSms, self.mockEmail)
+        self.challenge = Challenge(self.config, self.db, self.sms, self.mockEmail)
         self.pi = Pi()
 
     def tearDown(self):
@@ -72,3 +72,9 @@ class CommandTest(unittest.TestCase):
         command = OpenCommand(self.pi, self.db)
         with self.assertRaises(CommandIgnoredException):
             command.handle({'sid': '123', 'body': 'open'})
+
+    def test_diagnostics(self):
+        command = DiagnosticsCommand(self.config, self.pi, self.db, self.mockEmail, self.sms)
+        command.handle({'sid': '123', 'body': 'diagnostics', 'phoneFrom': '1112223333'})
+
+        self.assertEqual(1, len(self.mockEmail.sent_messages))

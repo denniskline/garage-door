@@ -17,7 +17,7 @@ class GarageDoorCommand:
         # All the accepted commands.  These must appear as the body of a text message (case insensitive).
         self.commands = {
             'close': CloseCommand(self.pi, self.db),
-            'diagnostics': DiagnosticsCommand(self.config, self.pi, self.db, self.email),
+            'diagnostics': DiagnosticsCommand(self.config, self.pi, self.db, self.email, self.sms),
             'help': HelpCommand(self.sms),
             'lock': LockCommand(self.db, self.sms),
             'open': OpenCommand(self.pi, self.db),
@@ -173,37 +173,44 @@ class StatusCommand:
 
 class DiagnosticsCommand:
 
-    def __init__(self, config, pi, db, email):
+    def __init__(self, config, pi, db, email, sms):
         self.config = config
         self.pi = pi
         self.db = db
         self.email = email
+        self.sms = sms
         pass
 
     def handle(self, message):
         logging.info("Handling command to diagnostics")
-        state = "closed" if self.pi.is_door_closed() else "open"
-        uptime = self.find_uptime()
-        diagnosticMessage = ("Door: {}<br>\nUptime: {}<br>\nNetwork light on: {}<br>\nError light on: {}<br>\n".format(state, uptime, self.pi.is_yellow_light_on(), self.pi.is_red_light_on()))
- 
-        # Send the diagnostic report to all the configured user addresses
+        diagnosticMessage = ''
+
+        # Pull the Raspberry PI Diagnostics
+        piDiagnostics = self.pi.diagnostics()
+        diagnosticMessage += '\n<b>PI Diagnostics:</b><UL>\n'
+        for k,v in sorted(piDiagnostics.items()):
+            diagnosticMessage += ('<LI>{}: {}</LI>\n'.format(k, v))
+        diagnosticMessage += '</UL>\n'
+
+       # Pull the SMS/Twilio Diagnostics
+        smsDiagnostics = self.sms.diagnostics()
+        diagnosticMessage += '\n<b>Twilio Diagnostics:</b><UL>\n'
+        for k,v in sorted(smsDiagnostics.items()):
+            diagnosticMessage += ('<LI>{}: {}</LI>\n'.format(k, v))
+        diagnosticMessage += '</UL>\n'
+
+        # Send the diagnostic report to the user who asked for it
         self.email.send(self.config.get(message.get('phoneFrom'), 'user.email.address'), 'Diagnostics', diagnosticMessage)
 
     def is_ack_success(self):
         return False
 
-    def find_uptime(self):
-        with open('/proc/uptime', 'r') as f:
-            uptime_seconds = float(f.readline().split()[0])
-            return str(datetime.timedelta(seconds = uptime_seconds))        
-
 class PhotoCommand:
 
     def __init__(self, photoDir, pi, email):
-        self.config = config
+        self.photoDir = photoDir
         self.pi = pi
         self.email = email
-        self.photoDir = photoDir
         pass
 
     def handle(self, message):

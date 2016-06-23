@@ -2,10 +2,11 @@ import unittest
 from gdmod.challenge import Challenge
 from gdmod.config import ApplicationConfiguration
 from gdmod import Database
+from gdmod import Sms
 import configparser
 import datetime
 from . import MockEmail
-from . import MockSms
+import time
 
 # garage-door> python3 -m unittest test.test_challenge
 class ChallengeTest(unittest.TestCase):
@@ -29,7 +30,8 @@ class ChallengeTest(unittest.TestCase):
         self.db = Database('./test/test-gd.db')
         self.mockEmail = MockEmail('gd@foo.com', 'gdpwd')
         self.mockEmail = MockEmail('gd@foo.com', 'gdpwd')
-        self.mockSms = MockSms(self.db, 'foo', 'foo', 'foo')
+        self.sms = Sms(self.db, 'foo', 'foo', 'foo')
+        self.sms.twilioClient.isMock = True
 
     def tearDown(self):
         self.db.destroy_database()
@@ -42,7 +44,7 @@ class ChallengeTest(unittest.TestCase):
         self.basicConfig['DEFAULT']['sms.door.command.challenge.timeframe'] = ''
         config = ApplicationConfiguration(None, None)
         config.configurations.append(self.basicConfig)
-        challenge = Challenge(config, self.db, self.mockSms, self.mockEmail)
+        challenge = Challenge(config, self.db, self.sms, self.mockEmail)
 
         self.assertTrue(challenge.is_challenge_required('Lock'))
 
@@ -51,7 +53,7 @@ class ChallengeTest(unittest.TestCase):
         self.basicConfig['DEFAULT']['sms.door.command.challenge.timeframe'] = ''
         config = ApplicationConfiguration(None, None)
         config.configurations.append(self.basicConfig)
-        challenge = Challenge(config, self.db, self.mockSms, self.mockEmail)
+        challenge = Challenge(config, self.db, self.sms, self.mockEmail)
 
         self.assertFalse(challenge.is_challenge_required('Lock'))
 
@@ -60,7 +62,7 @@ class ChallengeTest(unittest.TestCase):
         self.basicConfig['DEFAULT']['sms.door.command.challenge.timeframe'] = ''
         config = ApplicationConfiguration(None, None)
         config.configurations.append(self.basicConfig)
-        challenge = Challenge(config, self.db, self.mockSms, self.mockEmail)
+        challenge = Challenge(config, self.db, self.sms, self.mockEmail)
 
         self.assertTrue(challenge.is_challenge_required('Open'))
 
@@ -69,7 +71,7 @@ class ChallengeTest(unittest.TestCase):
         self.basicConfig['DEFAULT']['sms.door.command.challenge.timeframe'] = '{} - {}'.format((datetime.datetime.now() - datetime.timedelta(hours=1)).strftime("%H:%M"), (datetime.datetime.now() + datetime.timedelta(hours=1)).strftime("%H:%M"))
         config = ApplicationConfiguration(None, None)
         config.configurations.append(self.basicConfig)
-        challenge = Challenge(config, self.db, self.mockSms, self.mockEmail)
+        challenge = Challenge(config, self.db, self.sms, self.mockEmail)
 
         self.assertTrue(challenge.is_challenge_required('Open'))
 
@@ -78,7 +80,7 @@ class ChallengeTest(unittest.TestCase):
         self.basicConfig['DEFAULT']['sms.door.command.challenge.timeframe'] = '{} - {}'.format((datetime.datetime.now() + datetime.timedelta(hours=1)).strftime("%H:%M"), (datetime.datetime.now() - datetime.timedelta(hours=2)).strftime("%H:%M"))
         config = ApplicationConfiguration(None, None)
         config.configurations.append(self.basicConfig)
-        challenge = Challenge(config, self.db, self.mockSms, self.mockEmail)
+        challenge = Challenge(config, self.db, self.sms, self.mockEmail)
 
         self.assertFalse(challenge.is_challenge_required('Open'))
 
@@ -86,34 +88,33 @@ class ChallengeTest(unittest.TestCase):
         self.basicConfig['DEFAULT']['sms.door.command.challenge.via.channel'] = 'email'
         config = ApplicationConfiguration(None, None)
         config.configurations.append(self.basicConfig)
-        challenge = Challenge(config, self.db, self.mockSms, self.mockEmail)
+        challenge = Challenge(config, self.db, self.sms, self.mockEmail)
 
         code = challenge.create({'sid': '1234', 'phoneFrom': '1112223333'})
 
         self.assertTrue(6, len(code))
         self.assertEqual(1, len(self.mockEmail.sent_messages))
-        self.assertEqual(0, len(self.mockSms.sent_messages))
 
     def test_create_challenge_code_by_sms(self):
         self.basicConfig['DEFAULT']['sms.door.command.challenge.via.channel'] = 'sms'
         config = ApplicationConfiguration(None, None)
         config.configurations.append(self.basicConfig)
-        challenge = Challenge(config, self.db, self.mockSms, self.mockEmail)
+        challenge = Challenge(config, self.db, self.sms, self.mockEmail)
 
         code = challenge.create({'sid': '1234', 'phoneFrom': '1112223333'})
 
         self.assertTrue(6, len(code))
         self.assertEqual(0, len(self.mockEmail.sent_messages))
-        self.assertEqual(1, len(self.mockSms.sent_messages))
 
     def test_create_challenge_code_and_find_original_message_based_on_the_created_code(self):
         config = ApplicationConfiguration(None, None)
         config.configurations.append(self.basicConfig)
-        challenge = Challenge(config, self.db, self.mockSms, self.mockEmail)
+        challenge = Challenge(config, self.db, self.sms, self.mockEmail)
 
         originalMessage = {'sid': '1234', 'phoneFrom': '1112223333', 'body': 'Open'}
         self.db.insert_text_message(originalMessage) 
         code = challenge.create(originalMessage)
+        self.assertIsNone(challenge.fetch_message(code.lower())) # Case is important
         foundMessage = challenge.fetch_message(code)
 
         self.assertIsNotNone(foundMessage)

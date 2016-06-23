@@ -1,3 +1,4 @@
+import datetime
 import time
 import logging
 import random
@@ -23,8 +24,8 @@ class Pi:
         #time.sleep(1) # Garage door takes N seconds to close, wait a bit for that to finish
 
     def is_door_closed(self):
-        #return True if random.randrange(0,2) == 1 else False
-        return self.isDoorClosed
+        return True if random.randrange(0,2) == 1 else False
+        #return self.isDoorClosed
 
     def blink_green_light(self, interval=None):
         interval = interval if interval else 1
@@ -85,4 +86,21 @@ class Pi:
         
         if not os.path.exists(photoDir):
             os.makedirs(photoDir)
+
+        fileName = ('{}_gd_photo.jpg'.format(datetime.datetime.now().strftime("%H%M%S")))
+        file = ('{}/{}'.format(photoDir, fileName))
+        return file
+
+    def diagnostics(self):
+        diag = {}
+        diag['Door'] = "closed" if self.is_door_closed() else "open"
+        diag['Uptime'] = self.__find_uptime()
+        diag['Network light on'] = self.is_yellow_light_on()
+        diag['Error light on'] = self.is_red_light_on()
+        return diag
+
+    def __find_uptime(self):
+        with open('/proc/uptime', 'r') as f:
+            uptime_seconds = float(f.readline().split()[0])
+            return str(datetime.timedelta(seconds = uptime_seconds))        
 

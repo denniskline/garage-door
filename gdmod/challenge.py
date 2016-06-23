@@ -67,7 +67,7 @@ class Challenge:
         return ''.join(random.choice(self.chars) for _ in range(self.codeSize))
 
     def __looks_like_a_challenge_code(self, code):
-        return code is not None and len(set(self.chars).intersection(code)) == self.codeSize
+        return code is not None and code.isalnum() and code.isupper() and len(code) == self.codeSize
 
     # Where timeframe is a range of integers in 'hour:min - hour:min'.  ie: 22:00 - 7:00
     def __is_now_within_range(self, timeFrame):

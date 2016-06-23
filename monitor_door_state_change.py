@@ -26,6 +26,7 @@ def main():
    # Instantiate all the required modules
     db = Database(config.get('app.database.file'))
     pi = Pi()
+    basePhotoDir = config.get('door.media.photo.directory')
 
     # Watch for any changes to the state of the door.  At least until True stops being True
     while True:
@@ -41,7 +42,7 @@ def main():
                 
                 # When to door is opening, take a few pictures
                 if doorState == 'open':
-                    take_some_pictures(pi, 5)
+                    take_some_pictures(pi, basePhotoDir, 5)
 
         except:
             logging.error('Failure while monitoring door state change', exc_info=True)
@@ -51,9 +52,10 @@ def main():
         time.sleep(2)
 
 # Take a series of pictures with a small pause so we can 'record' the view of the door state change
-def take_some_pictures(pi, numPhotos):
+def take_some_pictures(pi, basePhotoDir, numPhotos):
+    photoDir = ('{}/{}'.format(basePhotoDir, datetime.datetime.now().strftime("%Y%m%d")))
     for x in range(0, numPhotos):
-        pi.take_picture()
+        photoFileName = pi.take_picture(photoDir)
         time.sleep(2)
 
 def get_config_directory(args, default):

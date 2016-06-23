@@ -1,16 +1,16 @@
 import datetime
 import logging
 from .exception import NetworkDownException
+from .client import TwilioClient
 
 class Sms:
-    from twilio.rest import TwilioRestClient
 
     def __init__(self, db, account_sid, auth_token, account_phone_number):
         self.db = db
         self.account_sid = account_sid
         self.auth_token = auth_token
         self.account_phone_number = account_phone_number
-        self.twilioRestClient = TwilioRestClient(self.account_sid, self.auth_token)
+        self.twilioClient = TwilioClient(self.account_sid, self.auth_token)
         pass
 
     def send(self, toPhoneNumber, message):
@@ -22,8 +22,7 @@ class Sms:
                 time.sleep(5) # Wait 5 seconds if this is a retry
 
             try:
-                response = self.twilioRestClient.sms.messages.create(body="{}".format(message),to="{}".format(toPhoneNumber),from_="{}".format(self.account_phone_number))
-                #response = "yay!"
+                response = self.twilioClient.send(toPhoneNumber, self.account_phone_number, message)
                 logging.info("Response from sending message:{} = {}".format(message, response))
                 return
             except Exception as e:
@@ -47,11 +46,16 @@ class Sms:
         messages.sort(key=lambda k: (k['sentAt'] is None, k['sentAt'] == datetime.datetime.now(), k['sentAt']))
         return messages
 
+    def diagnostics(self):
+        diag = {}
+        return diag
+
     def __list_all(self, dateSince):
         messages = []
         try:
             logging.info('calling twilio')
-            twilioMessages = self.twilioRestClient.messages.list(date_sent=datetime.datetime.utcnow())
+            twilioMessages = self.twilioClient.list(dateSince)
+
             for message in twilioMessages:
                 messages.append({
                     "sid": message.sid,

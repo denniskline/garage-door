@@ -1,28 +1,8 @@
-#try:
-#    from gdmod import config
-#except ImportError as e:
-#    print("Unable to load gdmoc")
-
-
-#try:
-#    import unittest.mock as mock
-#except ImportError:
-#    import mock
-
+import logging
+logging.basicConfig(format='%(asctime)s - %(name)s -  %(levelname)s - %(message)s', level=logging.INFO)
 
 # ************************************************************************
 # Mocks
-
-# Mock when we reach out to truly 'external' service endpoints
-class MockSms:
-    def __init__(self, db, account_sid, auth_token, account_phone_number):
-        self.sent_messages = []
- 
-    def send(self, toPhoneNumber, message):
-        self.sent_messages.append(message)
-
-    def list(self, dateSince=None):
-        raise ValueError("Challenge should not be listing sms messages")   
 
 class MockEmail:
     def __init__(self, gmailUsername, gmailPassword):
@@ -30,5 +10,10 @@ class MockEmail:
 
     def send(self, recipients, subject, messageContent):
         self.sent_messages.append(messageContent)
-        #print(messageContent)
+        logging.debug('Sending email message content: {}'.format(messageContent))
 
+class MockMessage:
+    def __init__(self, dictionary):
+        for k,v in dictionary.items():
+            setattr(self, k, v)
+        pass
