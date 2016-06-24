@@ -1,9 +1,11 @@
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
 import logging
 import time
 import os.path
+from os.path import basename
 
 class Email:
 
@@ -29,11 +31,11 @@ class Email:
                 time.sleep(5) # Wait 5 seconds if this is a retry
 
             try:
-                #server = smtplib.SMTP('smtp.gmail.com:587')
-                #server.ehlo()
-                #starttls = server.starttls()
-                #server.ehlo()
-                #login = server.login(self.gmailUsername, self.gmailPassword)
+                server = smtplib.SMTP('smtp.gmail.com:587')
+                server.ehlo()
+                starttls = server.starttls()
+                server.ehlo()
+                login = server.login(self.gmailUsername, self.gmailPassword)
                 
                 emailTo = ", ".join(recipients)
                 emailMessage = MIMEMultipart("alternative")
@@ -51,12 +53,12 @@ class Email:
                                 Name=basename(f)
                             )
                         part['Content-Disposition'] = 'attachment; filename="%s"' % basename(f)
-                        msg.attach(part)
+                        emailMessage.attach(part)
                     else:
                         logging.warn('Attempting to email file {} but no such file exists'.format(f))
 
-                #sendit = server.sendmail(self.gmailUsername, emailTo, emailMessage.as_string())
-                #server.quit()
+                sendit = server.sendmail(self.gmailUsername, emailTo, emailMessage.as_string())
+                server.quit()
                 logging.info("Sent {}, {}, {}".format(emailMessage['Subject'], emailMessage['From'], emailMessage['To']))
 
                 # Success: so return out of retry loop

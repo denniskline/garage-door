@@ -3,6 +3,7 @@ import time
 import logging
 import random
 import os
+import picamera
 
 class Pi:
 
@@ -24,8 +25,8 @@ class Pi:
         #time.sleep(1) # Garage door takes N seconds to close, wait a bit for that to finish
 
     def is_door_closed(self):
-        return True if random.randrange(0,2) == 1 else False
-        #return self.isDoorClosed
+        #return True if random.randrange(0,2) == 1 else False
+        return self.isDoorClosed
 
     def blink_green_light(self, interval=None):
         interval = interval if interval else 1
@@ -83,12 +84,17 @@ class Pi:
 
     def take_picture(self, photoDir):
         logging.debug('taking a picture')
+        camera = picamera.PiCamera()
+        camera.resolution = (1920, 1080)
+        camera.framerate = 15
         
         if not os.path.exists(photoDir):
             os.makedirs(photoDir)
 
         fileName = ('{}_gd_photo.jpg'.format(datetime.datetime.now().strftime("%H%M%S")))
         file = ('{}/{}'.format(photoDir, fileName))
+        camera.capture(file)
+
         return file
 
     def diagnostics(self):

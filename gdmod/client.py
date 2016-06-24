@@ -1,25 +1,26 @@
 import datetime
 import logging
+from twilio.rest import TwilioRestClient
 
 # Wrapper around the wilio clinet that enables easy mocking and testing on platforms 
 # that does not have the twilio rest client installed
 class TwilioClient:
 
-    try:
-        from twilio.rest import TwilioRestClient
-    except:
-        pass
+    #try:
+    #from twilio.rest import TwilioRestClient
+    #except:
+    #    pass
 
     def __init__(self, account_sid, auth_token):
         self.account_sid = account_sid
         self.auth_token = auth_token
         self.isMock = False
         self.mockMessages = []
-        try:
-            self.twilioRestClient = TwilioRestClient(self.account_sid, self.auth_token)
-        except:
-            logging.error('Twilio rest client is not installed, unable to make any real sms calls')
-            self.twilioRestClient = None
+        #try:
+        self.twilioRestClient = TwilioRestClient(self.account_sid, self.auth_token)
+        #except:
+        #    logging.error('Twilio rest client is not installed, unable to make any real sms calls')
+        #    self.twilioRestClient = None
         pass
 
     def send(self, phoneTo, phoneFrom, message):

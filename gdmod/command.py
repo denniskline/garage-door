@@ -21,7 +21,7 @@ class GarageDoorCommand:
             'help': HelpCommand(self.sms),
             'lock': LockCommand(self.db, self.sms),
             'open': OpenCommand(self.pi, self.db),
-            'photo': PhotoCommand(self.config.get('door.media.photo.directory'), self.pi, self.email),
+            'photo': PhotoCommand(self.config, self.pi, self.email),
             'status': StatusCommand(self.pi, self.db, self.sms),
             'unlock': UnlockCommand(self.db, self.sms),
         }
@@ -207,17 +207,20 @@ class DiagnosticsCommand:
 
 class PhotoCommand:
 
-    def __init__(self, photoDir, pi, email):
-        self.photoDir = photoDir
+    def __init__(self, config, pi, email):
+        self.config = config
         self.pi = pi
         self.email = email
         pass
 
     def handle(self, message):
         logging.info("Handling command to photo")
+        photoDir = self.config.get('door.media.photo.directory')
 
-        dateFolder = ('{}/{}'.format(self.photoDir, datetime.datetime.now().strftime("%Y%m%d")))
-        self.pi.take_picture(dateFolder)
+        dateFolder = ('{}/{}'.format(photoDir, datetime.datetime.now().strftime("%Y%m%d")))
+        photoName = self.pi.take_picture(dateFolder)
+        logging.info('[photo] {}'.format(photoName))
+        self.email.send(self.config.get(message.get('phoneFrom'), 'user.email.address'), 'Photo', 'Enjoy this lovely photo', [photoName])
 
     def is_ack_success(self):
         return False
