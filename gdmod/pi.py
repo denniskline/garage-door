@@ -94,7 +94,7 @@ class Pi:
         fileName = ('{}_gd_photo.jpg'.format(datetime.datetime.now().strftime("%H%M%S")))
         file = ('{}/{}'.format(photoDir, fileName))
         camera.capture(file)
-
+        camera.close()
         return file
 
     def diagnostics(self):
