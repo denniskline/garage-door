@@ -4,6 +4,8 @@ import logging
 import random
 import os
 import picamera
+from gpiozero import InputDevice
+from gpiozero import LED
 
 class Pi:
 
@@ -84,17 +86,21 @@ class Pi:
 
     def take_picture(self, photoDir):
         logging.debug('taking a picture')
-        camera = picamera.PiCamera()
-        camera.resolution = (1920, 1080)
-        camera.framerate = 15
-        
         if not os.path.exists(photoDir):
             os.makedirs(photoDir)
-
         fileName = ('{}_gd_photo.jpg'.format(datetime.datetime.now().strftime("%H%M%S")))
         file = ('{}/{}'.format(photoDir, fileName))
-        camera.capture(file)
-        camera.close()
+
+        camera = picamera.PiCamera()
+        try:
+            #camera.resolution = (1920, 1080)
+            camera.resolution = (2592, 1944)
+            camera.framerate = 15
+            camera.brightness = 70 
+            camera.capture(file)
+        finally:
+            camera.close()
+
         return file
 
     def diagnostics(self):

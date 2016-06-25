@@ -35,7 +35,7 @@ class Sms:
 
     def list(self, dateSince=None):
         dateSince = dateSince if dateSince else datetime.datetime.now() - datetime.timedelta(minutes=15)
-        logging.info("Attempting to list all unprocessed messages since: {}".format(dateSince))
+        logging.debug("Attempting to list all unprocessed messages since: {}".format(dateSince))
 
         twilioMessages = self.__list_all(dateSince)
         processedMessages = self.db.find_messages(datetime.datetime.now() - datetime.timedelta(days=3))
@@ -50,7 +50,7 @@ class Sms:
     def __list_all(self, dateSince):
         messages = []
         try:
-            logging.info('calling twilio')
+            logging.debug('calling twilio')
             twilioMessages = self.twilioRestClient.messages.list(date_sent=datetime.datetime.utcnow())
             for message in twilioMessages:
                 messages.append({
