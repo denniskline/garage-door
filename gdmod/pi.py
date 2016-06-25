@@ -14,6 +14,10 @@ class Pi:
         self.yellowLightOn = False
         self.greenLightOn = False
         self.isDoorClosed = True # TODO: This will be a GPIO test and not a member variables
+        self.gpio18 = InputDevice(18,False) # Pull down input device
+        self.ledGreen = LED(17)
+        self.ledYellow = LED(27)
+        self.ledRed = LED(22)
         pass
 
     def open_door(self):
@@ -28,13 +32,15 @@ class Pi:
 
     def is_door_closed(self):
         #return True if random.randrange(0,2) == 1 else False
-        return self.isDoorClosed
+        #return self.isDoorClosed
+        return not self.gpio18.is_active
 
     def blink_green_light(self, interval=None):
         interval = interval if interval else 1
         logging.debug("Blinking green light with an interval of: {}".format(interval))
         try:
             self.greenLightOn = True
+            self.ledGreen.on()
         except:
             logging.warn("Unable to blink green light", exc_info=True)
 
@@ -43,6 +49,7 @@ class Pi:
         logging.debug("Blinking yellow light with an interval of: {}".format(interval))
         try:
             self.yellowLightOn = True
+            self.ledYellow.on()
         except:
             logging.warn("Unable to blink yellow light", exc_info=True)
 
@@ -51,6 +58,7 @@ class Pi:
         logging.debug("Blinking red light with an interval of: {}".format(interval))
         try:
             self.redLightOn = True
+            self.ledRed.on()
         except:
             logging.warn("Unable to blink red light", exc_info=True)
 
@@ -58,6 +66,7 @@ class Pi:
         logging.debug("Turning green light off")
         try:
             self.greenLightOn = False
+            self.ledGreen.off()
         except:
             logging.warn("Unable to turn off green light", exc_info=True)
 
@@ -65,6 +74,7 @@ class Pi:
         logging.debug("Turning yellow light off")
         try:
             self.yellowLightOn = False
+            self.ledYellow.off()
         except:
             logging.warn("Unable to turn off yellow light", exc_info=True)
 
@@ -72,6 +82,7 @@ class Pi:
         logging.debug("Turning red light off")
         try:
             self.redLightOn = False
+            self.ledRed.off()
         except:
             logging.warn("Unable to turn off red light", exc_info=True)
 
