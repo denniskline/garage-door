@@ -3,6 +3,7 @@ import datetime
 import time
 import logging
 import dropbox
+import math
 
 class Dropbox:
 
@@ -33,5 +34,21 @@ class Dropbox:
                 raise err
 
     def diagnostics(self):
+        dbx = dropbox.Dropbox(self.accessToken)
+        usage = dbx.users_get_space_usage() 
+
         diag = {}
+        diag['Used'] = self.convertSize(usage.used)
+        diag['Allocated'] = self.convertSize(usage.allocation.get_individual().allocated)
+        diag['Remaining'] = self.convertSize(usage.allocation.get_individual().allocated - usage.used)
+
         return diag
+
+    def convertSize(self, size):
+        if (size == 0):
+            return '0B'
+        size_name = ("KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
+        i = int(math.floor(math.log(size,1024)))
+        p = math.pow(1024,i)
+        s = round(size/p,2)
+        return '%s %s' % (s,size_name[i])
