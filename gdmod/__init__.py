@@ -4,6 +4,7 @@ from .sms import Sms
 from .pi import Pi
 from .email import Email
 from .challenge import Challenge
+from .dropbox import Dropbox
 from .client import TwilioClient
 from .authorization import Authorization
 from .exception import NetworkDownException
