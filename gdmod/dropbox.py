@@ -32,3 +32,6 @@ class Dropbox:
             except dropbox.exceptions.ApiError as err:
                 raise err
 
+    def diagnostics(self):
+        diag = {}
+        return diag

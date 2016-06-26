@@ -15,6 +15,7 @@ from gdmod import NetworkDownException
 from gdmod import Pi
 from gdmod import Sms
 from gdmod import GarageDoorCommand
+from gdmod import Dropbox
 
 def main():
     # Check command options to see if a custom configuration directory was supplied
@@ -38,7 +39,8 @@ def main():
     pi = Pi()
     email = Email(config.get('door.email.address'), config.get('door.email.pword'), config.get_conf_file_contents('email-style.css'))
     challenge = Challenge(config, db, sms, email)
-    command = GarageDoorCommand(config, db, challenge, pi, sms, email)
+    dropbox = Dropbox(config.get('dropbox.gd.access.token'))
+    command = GarageDoorCommand(config, db, challenge, pi, sms, email, dropbox)
 
     while True:
         try:

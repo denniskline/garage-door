@@ -6,18 +6,19 @@ import os
 
 class GarageDoorCommand:
 
-    def __init__(self, config, db, challenge, pi, sms, email):
+    def __init__(self, config, db, challenge, pi, sms, email, dropbox):
         self.config = config
         self.db = db
         self.challenge = challenge
         self.pi = pi
         self.sms = sms
         self.email = email
+        self.dropbox = dropbox
 
         # All the accepted commands.  These must appear as the body of a text message (case insensitive).
         self.commands = {
             'close': CloseCommand(self.pi, self.db),
-            'diagnostics': DiagnosticsCommand(self.config, self.pi, self.db, self.email, self.sms),
+            'diagnostics': DiagnosticsCommand(self.config, self.pi, self.db, self.email, self.sms, self.dropbox),
             'help': HelpCommand(self.sms),
             'lock': LockCommand(self.db, self.sms),
             'open': OpenCommand(self.pi, self.db),
@@ -173,31 +174,30 @@ class StatusCommand:
 
 class DiagnosticsCommand:
 
-    def __init__(self, config, pi, db, email, sms):
+    def __init__(self, config, pi, db, email, sms, dropbox):
         self.config = config
         self.pi = pi
         self.db = db
         self.email = email
         self.sms = sms
+        self.dropbox = dropbox
         pass
 
     def handle(self, message):
         logging.info("Handling command to diagnostics")
+        diagnostics = {}
+
+        diagnostics['PI Diagnostics'] = self.pi.diagnostics()
+        diagnostics['Twilio Diagnostics'] = self.sms.diagnostics()
+        diagnostics['Dropbox Diagnostics'] = self.dropbox.diagnostics()
+
         diagnosticMessage = ''
+        for subject,diags in sorted(diagnostics.items()):
+            diagnosticMessage += '\n<b>{}:</b><UL>\n'.format(subject)
 
-        # Pull the Raspberry PI Diagnostics
-        piDiagnostics = self.pi.diagnostics()
-        diagnosticMessage += '\n<b>PI Diagnostics:</b><UL>\n'
-        for k,v in sorted(piDiagnostics.items()):
-            diagnosticMessage += ('<LI>{}: {}</LI>\n'.format(k, v))
-        diagnosticMessage += '</UL>\n'
-
-       # Pull the SMS/Twilio Diagnostics
-        smsDiagnostics = self.sms.diagnostics()
-        diagnosticMessage += '\n<b>Twilio Diagnostics:</b><UL>\n'
-        for k,v in sorted(smsDiagnostics.items()):
-            diagnosticMessage += ('<LI>{}: {}</LI>\n'.format(k, v))
-        diagnosticMessage += '</UL>\n'
+            for k,v in sorted(diags.items()):
+                diagnosticMessage += ('<LI>{}: {}</LI>\n'.format(k, v))
+            diagnosticMessage += '</UL>\n'
 
         # Send the diagnostic report to the user who asked for it
         self.email.send(self.config.get(message.get('phoneFrom'), 'user.email.address'), 'Diagnostics', diagnosticMessage)
