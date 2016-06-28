@@ -47,6 +47,7 @@ class Dropbox:
     def convertSize(self, size):
         if (size == 0):
             return '0B'
+        size = size/1024
         size_name = ("KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
         i = int(math.floor(math.log(size,1024)))
         p = math.pow(1024,i)
