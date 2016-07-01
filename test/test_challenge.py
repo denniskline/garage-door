@@ -6,6 +6,7 @@ from gdmod import Sms
 import configparser
 import datetime
 from . import MockEmail
+from . import MockPi
 import time
 
 # garage-door> python3 -m unittest test.test_challenge
@@ -28,10 +29,10 @@ class ChallengeTest(unittest.TestCase):
                             'sms.door.command.challenge.commands.always': 'Lock', 
                             }
         self.db = Database('./test/test-gd.db')
-        self.mockEmail = MockEmail('gd@foo.com', 'gdpwd')
+        self.mockPi = MockPi()
         self.mockEmail = MockEmail('gd@foo.com', 'gdpwd')
         self.sms = Sms(self.db, 'foo', 'foo', 'foo')
-        self.sms.twilioClient.isMock = True
+        #self.sms.twilioClient.isMock = True
 
     def tearDown(self):
         self.db.destroy_database()
