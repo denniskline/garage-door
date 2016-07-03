@@ -27,11 +27,8 @@ class MockPi:
         self.isDoorClosed = True 
         pass
 
-    def open_door(self):
+    def click_door(self):
         self.isDoorClosed = False
-
-    def close_door(self):
-        self.isDoorClosed = True
 
     def is_door_closed(self):
         return self.isDoorClosed

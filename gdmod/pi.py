@@ -5,35 +5,30 @@ import random
 import os
 import picamera
 from gpiozero import InputDevice
-from gpiozero import DigitalOutputDevice
+#from gpiozero import DigitalOutputDevice
+from gpiozero import OutputDevice
 from gpiozero import LED
 
+# OutputDevice: active_high must be false or the wall panel will shut off
 class Pi:
 
     def __init__(self):
         self.redLightOn = False
         self.yellowLightOn = False
         self.greenLightOn = False
-        self.garageOpener = DigitalOutputDevice(18)
+        self.garageOpener = OutputDevice(18, active_high=False, initial_value=False)
         self.reedSwitch = InputDevice(23,False) # Pull down input device
         self.ledGreen = LED(22)
         self.ledYellow = LED(27)
         self.ledRed = LED(17)
         pass
 
-    def open_door(self):
-        logging.info("Opening door")
+    def click_door(self):
+        logging.info("Clicking door")
         self.garageOpener.on()
-        time.sleep(.5)
+        time.sleep(1)
         self.garageOpener.off()
-        time.sleep(5)
-
-    def close_door(self):
-        logging.info("Closing door")
-        self.garageOpener.on()
-        time.sleep(.5)
-        self.garageOpener.off()
-        time.sleep(5)
+        time.sleep(5) # Wait a few seconds for the door to fully do its thing
 
     def is_door_closed(self):
         #return True if random.randrange(0,2) == 1 else False
@@ -120,8 +115,9 @@ class Pi:
         diag = {}
         diag['Door'] = "closed" if self.is_door_closed() else "open"
         diag['Uptime'] = self.__find_uptime()
-        diag['Network light on'] = self.is_yellow_light_on()
-        diag['Error light on'] = self.is_red_light_on()
+        diag['Temp'] = ("{}'C (80'C is high)".format(self.__find_system_temp()))
+        diag['Network Down'] = self.is_yellow_light_on()
+        diag['Error'] = self.is_red_light_on()
         return diag
 
     def __find_uptime(self):
@@ -129,3 +125,6 @@ class Pi:
             uptime_seconds = float(f.readline().split()[0])
             return str(datetime.timedelta(seconds = uptime_seconds))        
 
+    def __find_system_temp(self):
+        temp = os.popen("/opt/vc/bin/vcgencmd measure_temp").read()
+        return float(temp.split('=')[1][:-3])

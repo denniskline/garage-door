@@ -49,7 +49,7 @@ class CommandTest(unittest.TestCase):
     # Test Cases
 
     def test_open_command_when_door_is_closed(self):
-        self.mockPi.close_door()
+        self.mockPi.click_door()
         self.assertTrue(self.mockPi.is_door_closed())
 
         command = OpenCommand(self.mockPi, self.db)
@@ -57,7 +57,7 @@ class CommandTest(unittest.TestCase):
         self.assertFalse(self.mockPi.is_door_closed())
 
     def test_open_command_when_door_is_open(self):
-        self.mockPi.open_door()
+        self.mockPi.click_door()
         self.assertFalse(self.mockPi.is_door_closed())
 
         command = OpenCommand(self.mockPi, self.db)
@@ -65,7 +65,7 @@ class CommandTest(unittest.TestCase):
             command.handle({'sid': '123', 'body': 'open'})
 
     def test_open_command_when_door_is_locked(self):
-        self.mockPi.close_door()
+        self.mockPi.click_door()
         self.assertTrue(self.mockPi.is_door_closed())
 
         self.db.insert_door_lock()

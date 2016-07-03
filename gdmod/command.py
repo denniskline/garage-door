@@ -100,7 +100,7 @@ class OpenCommand:
         elif self.db.find_door_lock() is not None:
             raise CommandIgnoredException('Door locked, unable to open')
         else:
-            self.pi.open_door()
+            self.pi.click_door()
 
     def is_ack_success(self):
         return True
@@ -117,7 +117,7 @@ class CloseCommand:
         if self.pi.is_door_closed():
             raise CommandIgnoredException("Door already closed")
         else:
-            self.pi.close_door()
+            self.pi.click_door()
 
     def is_ack_success(self):
         return True
@@ -233,10 +233,12 @@ class HelpCommand:
 
     def handle(self, message):
         logging.info("Handling command to help")
-        helpMessage = 'Commands:\n  close\n  help\n  lock\n  open\n  photo\n  status\n  unlock'
+        commandNames = ['Help', 'Close', 'Diagnostics', 'Lock', 'Open', 'Photo', 'Status', 'Unlock']
+        helpMessage = 'Commands:\n'
+        for cmd in sorted(commandNames):
+            helpMessage += ('   {}\n'.format(cmd))
         self.sms.send(message.get('phoneFrom'), helpMessage)
 
     def is_ack_success(self):
         return False
-
 
