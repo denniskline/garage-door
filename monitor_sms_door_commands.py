@@ -42,6 +42,7 @@ def main():
     dropbox = Dropbox(config.get('dropbox.gd.access.token'))
     command = GarageDoorCommand(config, db, challenge, pi, sms, email, dropbox)
 
+    logging("Starting SMS Monitor Application")
     while True:
         try:
             # Turn on green light to indicate that work is being done

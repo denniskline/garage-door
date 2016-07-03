@@ -28,6 +28,8 @@ def main():
     db = Database(config.get('app.database.file'))
     email = Email(config.get('door.email.address'), config.get('door.email.pword'), config.get_conf_file_contents('email-style.css'))
 
+    logging("Starting Reporting")
+
     # Run the report with 5 retries if there is a failure
     for x in range(0, 5):
 

@@ -30,6 +30,8 @@ def main():
     basePhotoDir = config.get('door.media.photo.directory')
     dropbox = Dropbox(config.get('dropbox.gd.access.token'))
 
+    logging("Starting Door State Change Monitor Application")
+
     # Watch for any changes to the state of the door.  At least until True stops being True
     while True:
         try:
