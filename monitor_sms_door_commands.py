@@ -34,7 +34,7 @@ def main():
     az = Authorization(config.get('sms.door.command.allowed.phonenumbers'))
     db = Database(config.get('app.database.file'))
     pi = Pi()
-    sms = Sms(db, pi, config.get('sms.account.id'), config.get('sms.account.token'), config.get('sms.account.phone.number'))
+    sms = Sms(db, config.get('sms.account.id'), config.get('sms.account.token'), config.get('sms.account.phone.number'))
     #sms.twilioClient.isMock = True # TODO
     #sms.twilioClient.mockMessages = __mock_messages() # TODO
     email = Email(config.get('door.email.address'), config.get('door.email.pword'), config.get_conf_file_contents('email-style.css'))
@@ -45,7 +45,7 @@ def main():
     while True:
         try:
             # Turn on green light to indicate that work is being done
-            self.pi.green_light_on()
+            pi.green_light_on()
 
             # fetch all the new messages that need processing
             smsMessages = sms.list()
@@ -73,7 +73,7 @@ def main():
             logging.error('Failure processing sms command messages', exc_info=True)
             pi.red_light_on(.5)
         finally:
-            self.pi.green_light_off()
+            pi.green_light_off()
             time.sleep(5)
 
 def get_config_directory(args, default):

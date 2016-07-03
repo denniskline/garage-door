@@ -5,6 +5,7 @@ import random
 import os
 import picamera
 from gpiozero import InputDevice
+from gpiozero import DigitalOutputDevice
 from gpiozero import LED
 
 class Pi:
@@ -13,27 +14,30 @@ class Pi:
         self.redLightOn = False
         self.yellowLightOn = False
         self.greenLightOn = False
-        self.isDoorClosed = True # TODO: This will be a GPIO test and not a member variables
-        self.gpio18 = InputDevice(18,False) # Pull down input device
-        self.ledGreen = LED(17)
+        self.garageOpener = DigitalOutputDevice(18)
+        self.reedSwitch = InputDevice(23,False) # Pull down input device
+        self.ledGreen = LED(22)
         self.ledYellow = LED(27)
-        self.ledRed = LED(26)
+        self.ledRed = LED(17)
         pass
 
     def open_door(self):
         logging.info("Opening door")
-        self.isDoorClosed = False
-        #time.sleep(1) # Garage door takes N seconds to open, wait a bit for that to finish
+        self.garageOpener.on()
+        time.sleep(.5)
+        self.garageOpener.off()
+        time.sleep(5)
 
     def close_door(self):
         logging.info("Closing door")
-        self.isDoorClosed = True
-        #time.sleep(1) # Garage door takes N seconds to close, wait a bit for that to finish
+        self.garageOpener.on()
+        time.sleep(.5)
+        self.garageOpener.off()
+        time.sleep(5)
 
     def is_door_closed(self):
         #return True if random.randrange(0,2) == 1 else False
-        #return self.isDoorClosed
-        return not self.gpio18.is_active
+        return not self.reedSwitch.is_active
 
     def green_light_on(self):
         logging.debug("green light on")
@@ -101,10 +105,11 @@ class Pi:
 
         camera = picamera.PiCamera()
         try:
-            #camera.resolution = (1920, 1080)
-            camera.resolution = (2592, 1944)
+            camera.resolution = (1920, 1080)
+            #camera.resolution = (2592, 1944)
             camera.framerate = 15
-            camera.brightness = 70 
+            #camera.brightness = 70 
+            camera.rotation = 90
             camera.capture(file)
         finally:
             camera.close()

@@ -44,7 +44,7 @@ def main():
                 
                 # When to door is opening, take a few pictures
                 if doorState == 'open':
-                    take_some_pictures(pi, dropbox, basePhotoDir, 5)
+                    take_some_pictures(pi, dropbox, basePhotoDir, 4)
 
         except:
             logging.error('Failure while monitoring door state change', exc_info=True)

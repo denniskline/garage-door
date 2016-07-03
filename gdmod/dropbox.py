@@ -38,22 +38,6 @@ class Dropbox:
 
         return diag
 
-    def __upload_file(self, fileName):
-        logging.info("Uploading file: {}".format(fileName))
-        mode = dropbox.files.WriteMode.overwrite
-        mtime = os.path.getmtime(fileName)
-        fileStamp = datetime.datetime(*time.gmtime(mtime)[:6])
-
-        dropBoxFileName = ('/photo/' +
-                          os.path.basename(os.path.dirname(fileName)) + '/' +
-                          os.path.basename(fileName))
-
-        with open(fileName, 'rb') as f:
-            data = f.read()
-
-        dbx = dropbox.Dropbox(self.accessToken)
-        return dbx.files_upload(data, dropBoxFileName, mode, client_modified=fileStamp, mute=True)
-
     def __convertSize(self, size):
         if (size == 0):
             return '0B'
