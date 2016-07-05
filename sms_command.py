@@ -72,7 +72,7 @@ def main():
             pi.yellow_light_on()
         except:
             logging.error('Failure processing sms command messages', exc_info=True)
-            pi.red_light_on(.5)
+            pi.red_light_on()
         finally:
             pi.green_light_off()
             time.sleep(5)

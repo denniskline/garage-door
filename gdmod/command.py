@@ -101,6 +101,12 @@ class OpenCommand:
             raise CommandIgnoredException('Door locked, unable to open')
         else:
             self.pi.click_door()
+            for x in range(0, 5):
+                if not self.pi.is_door_closed():
+                   return
+                time.sleep(2)
+            raise ValueError("Failure: Door still not opened after 10 seconds") # TODO: CommandFailureException ?
+
 
     def is_ack_success(self):
         return True
@@ -118,6 +124,12 @@ class CloseCommand:
             raise CommandIgnoredException("Door already closed")
         else:
             self.pi.click_door()
+            for x in range(0, 5):
+                if self.pi.is_door_closed():
+                   return
+                time.sleep(2)
+            raise ValueError("Failure: Door still not closed after 10 seconds")
+
 
     def is_ack_success(self):
         return True
