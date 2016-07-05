@@ -20,7 +20,7 @@ if [ "$ACTION" == "help" ] ; then
 fi
 
 # ----------------------------------------------------------------------
-SERVICE_DIR=$HOME/gd/garage-door
+SERVICE_DIR=$(pwd)
 LOG_DIR=/var/local/gd/log
 
 declare -a SERVICES=(door_up_down sms_comman)
@@ -41,15 +41,17 @@ if [ "$ACTION" == "start" ]; then
         for srvs in ${SERVICES[@]}
         do
             GD_SERVICE="$srvs"
-        	echo "Starting node: $GD_SERVICE"
-            cd $SERVICE_DIR
-            nohup $GD_SERVICE.py --configdirectory=$SERVICE_DIR/conf >> $LOG_DIR/$GD_SERVICE.nohup 2>&1 &
+            echo "Starting node: $GD_SERVICE"
+            date >> $LOG_DIR/$GD_SERVICE.nohup
+            echo "Starting node: $GD_SERVICE" >> $LOG_DIR/$GD_SERVICE.nohup
+            nohup $SERVICE_DIR/$GD_SERVICE.py --configdirectory=$SERVICE_DIR/conf >> $LOG_DIR/$GD_SERVICE.nohup 2>&1 &
             sleep 1
         done
     else
         GD_SERVICE="$SERVICE_NAME"
-        cd $SERVICE_DIR
-        nohup $GD_SERVICE.py --configdirectory=$SERVICE_DIR/conf >> $LOG_DIR/$GD_SERVICE.nohup 2>&1 &
+        date >> $LOG_DIR/$GD_SERVICE.nohup
+        echo "Starting node: $GD_SERVICE" >> $LOG_DIR/$GD_SERVICE.nohup
+        nohup $SERVICE_DIR/$GD_SERVICE.py --configdirectory=$SERVICE_DIR/conf >> $LOG_DIR/$GD_SERVICE.nohup 2>&1 &
     fi        
 
 # ----------------------------------------------------------------------
@@ -65,13 +67,13 @@ elif [ "$ACTION" == "stop" ]; then
         do
             GD_SERVICE="$srvs"
             echo "Stopping $GD_SERVICE ..."
-            ps -ef | grep -i $GD_SERVICE | grep -iv grep | grep java | awk "{print \$2}" | xargs kill
+            ps -ef | grep -i $GD_SERVICE | grep -iv grep | grep python3 | awk "{print \$2}" | xargs kill
             sleep 1
         done
     else
         GD_SERVICE="$SERVICE_NAME"
         echo "Stopping $GD_SERVICE ..."
-        ps -ef | grep -i $GD_SERVICE | grep -iv grep | grep java | awk "{print \$2}" | xargs kill
+        ps -ef | grep -i $GD_SERVICE | grep -iv grep | grep python3 | awk "{print \$2}" | xargs kill
     fi
 
 # ----------------------------------------------------------------------
@@ -96,7 +98,7 @@ elif  [ "$ACTION" == "tail" ]; then
     else
         GD_SERVICE="$SERVICE_NAME"
         if [ -a $LOG_DIR/$GD_SERVICE.log ]; then
-            tail -1 $LOG_DIR/$GD_SERVICE.log
+            tail -f $LOG_DIR/$GD_SERVICE.log
         else
             echo "File does not exist to tail: $LOG_DIR/$GD_SERVICE.log .  Did you start that service?  $0 start $GD_SERVICE"
         fi
