@@ -14,10 +14,11 @@ class Dropbox:
 
     def upload(self, fileNames):
         if type(fileNames) is not list: fileNames = [ fileNames ]
+        dbx = dropbox.Dropbox(self.accessToken)
 
         uploadThreads = []
         for fileName in fileNames:
-            uploadThreads.append(UploadThread(self.accessToken, fileName))
+            uploadThreads.append(UploadThread(dbx, fileName))
  
         # Start all the threads
         for uploadThread in uploadThreads:
@@ -50,9 +51,9 @@ class Dropbox:
 
 class UploadThread (threading.Thread):
 
-    def __init__(self, accessToken, fileName):
+    def __init__(self, dbx, fileName):
         threading.Thread.__init__(self)
-        self.accessToken = accessToken
+        self.dbx = dbx
         self.fileName = fileName
 
     def run(self):
@@ -61,13 +62,10 @@ class UploadThread (threading.Thread):
         mtime = os.path.getmtime(self.fileName)
         fileStamp = datetime.datetime(*time.gmtime(mtime)[:6])
 
-        dropBoxFileName = ('/photo/' +
-                          os.path.basename(os.path.dirname(self.fileName)) + '/' +
-                          os.path.basename(self.fileName))
+        dropBoxFileName = ('/photo/' + datetime.datetime.now().strftime("/photo/%Y/%B/%d-%A/") + os.path.basename(self.fileName))
 
         with open(self.fileName, 'rb') as f:
             data = f.read()
 
-        dbx = dropbox.Dropbox(self.accessToken)
         return dbx.files_upload(data, dropBoxFileName, mode, client_modified=fileStamp, mute=True)
 
