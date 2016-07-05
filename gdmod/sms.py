@@ -81,5 +81,19 @@ class Sms:
         return notIns
 
     def diagnostics(self):
+        usage = self.__usage()
+
         diag = {}
+        diag['Num Texts Past 30 Days'] = usage.count
+        diag['Cost'] = ('${}'.format(usage.price))
+
         return diag
+
+    def __usage(self):
+        begin = (datetime.datetime.now() - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+        end = datetime.datetime.now().strftime("%Y-%m-%d")
+        usageRecords = self.twilioRestClient.usage.records.list(category='sms', start_date=begin, end_date=end)
+
+        for record in usageRecords:
+            return record
+
