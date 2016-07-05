@@ -16,6 +16,7 @@ class Pi:
         self.redLightOn = False
         self.yellowLightOn = False
         self.greenLightOn = False
+        #self.garageOpener = OutputDevice(18, active_high=True, initial_value=False)
         self.garageOpener = OutputDevice(18, active_high=False, initial_value=False)
         self.reedSwitch = InputDevice(23,False) # Pull down input device
         self.ledGreen = LED(22)
