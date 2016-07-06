@@ -62,5 +62,7 @@ class Dropbox:
         dbx = dropbox.Dropbox(self.accessToken)
         logging.info("Uploading file {} to dropbox: {}".format(fileName, dropBoxFileName))
         response = dbx.files_upload(data, dropBoxFileName, mode, client_modified=fileStamp, mute=True)
-        logging.info("Response from dropbox: {}".format(response))
+        logging.debug("Response from dropbox: {}".format(response))
+       
+        return response
 
