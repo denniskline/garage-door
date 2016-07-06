@@ -14,19 +14,18 @@ class Dropbox:
 
     def upload(self, fileNames):
         if type(fileNames) is not list: fileNames = [ fileNames ]
-        dbx = dropbox.Dropbox(self.accessToken)
 
         uploadThreads = []
         for fileName in fileNames:
-            uploadThreads.append(UploadThread(dbx, fileName))
- 
+            uploadThreads.append(threading.Thread(target=self.__upload, args=(fileName,)))
+
         # Start all the threads
         for uploadThread in uploadThreads:
             uploadThread.start()
 
         # Wait for all the threads to complete
-        for uploadThread in uploadThreads:
-            uploadThread.join()
+        #for uploadThread in uploadThreads:
+        #    uploadThread.join()
 
     def diagnostics(self):
         dbx = dropbox.Dropbox(self.accessToken)
@@ -49,23 +48,19 @@ class Dropbox:
         s = round(size/p,2)
         return '%s %s' % (s,size_name[i])
 
-class UploadThread (threading.Thread):
-
-    def __init__(self, dbx, fileName):
-        threading.Thread.__init__(self)
-        self.dbx = dbx
-        self.fileName = fileName
-
-    def run(self):
-        logging.info("Uploading file: {}".format(self.fileName))
+    def __upload(self, fileName):
+        logging.info("Uploading file: {}".format(fileName))
         mode = dropbox.files.WriteMode.overwrite
-        mtime = os.path.getmtime(self.fileName)
+        mtime = os.path.getmtime(fileName)
         fileStamp = datetime.datetime(*time.gmtime(mtime)[:6])
 
-        dropBoxFileName = ('/photo/' + datetime.datetime.now().strftime("/photo/%Y/%B/%d-%A/") + os.path.basename(self.fileName))
+        dropBoxFileName = (datetime.datetime.now().strftime("/photo/%Y/%B/%d-%A/") + os.path.basename(fileName))
 
-        with open(self.fileName, 'rb') as f:
+        with open(fileName, 'rb') as f:
             data = f.read()
 
-        return dbx.files_upload(data, dropBoxFileName, mode, client_modified=fileStamp, mute=True)
+        dbx = dropbox.Dropbox(self.accessToken)
+        logging.info("Uploading file {} to dropbox: {}".format(fileName, dropBoxFileName))
+        response = dbx.files_upload(data, dropBoxFileName, mode, client_modified=fileStamp, mute=True)
+        logging.info("Response from dropbox: {}".format(response))
 
