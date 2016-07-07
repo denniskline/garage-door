@@ -64,9 +64,7 @@ def take_some_pictures(pi, dropbox, basePhotoDir, numPhotos):
         photos.append(photoFileName)
         time.sleep(2)
 
-    # TODO Offload this in another thread (takes too long in the root thread)
-    for photo in photos:
-        dropbox.upload(photo)
+    dropbox.upload(photos)
 
 def get_config_directory(args, default):
     options, remainder = getopt.getopt(args, 'c:', ['configdirectory=',])

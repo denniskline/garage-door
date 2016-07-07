@@ -24,8 +24,8 @@ class Dropbox:
             uploadThread.start()
 
         # Wait for all the threads to complete
-        #for uploadThread in uploadThreads:
-        #    uploadThread.join()
+        for uploadThread in uploadThreads:
+            uploadThread.join()
 
     def diagnostics(self):
         dbx = dropbox.Dropbox(self.accessToken)
