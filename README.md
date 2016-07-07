@@ -51,8 +51,8 @@
   - Click top-right menu network, select SID, enter password
 
 ###### Add new user
-  - sudo useradd -m <YOUR USERNAME> -G sudo
-  - sudo passwd <YOUR USERNAME>
+  - sudo useradd -m YOUR_USERNAME -G sudo
+  - sudo passwd YOUR_USERNAME
   - make sure this works: sudo visudo
   - sudo raspi-config   (Boot to CLI instead of desktop)
     - Boot Options
@@ -62,7 +62,7 @@
   - Delete default pi user
     - sudo deluser -remove-home pi
     - sudo visudo
-    - Change last line from pi to <YOUR USERNAME>
+    - Change last line from pi to YOUR_USERNAME
 
 ###### Firewall
   - sudo apt-get install ufw
