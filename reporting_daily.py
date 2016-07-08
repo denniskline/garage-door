@@ -55,6 +55,8 @@ def main():
             time.sleep(300) # Wait a nice long time before retrying again: it's a daily report, waiting 5 mins is no biggie
             pass
 
+    logging.info("Completed Reporting")
+
 def create_histories_report(histories, cssStyle, now, yesterday):
     body = '<H3>Garage Door Report: {} - {}</H3>\n'.format(yesterday.strftime("%b %d (%A) %I:%M%p"), datetime.datetime.now().strftime("%b %d (%A) %I:%M%p"))
     body += '<table>\n<tr><th>Time</th><th>State</th></tr>\n'
