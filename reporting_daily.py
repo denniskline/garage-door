@@ -10,6 +10,13 @@ from gdmod import ApplicationConfiguration
 from gdmod import Database
 from gdmod import Email
 
+# ************************************************************************
+# Schedule the report to run every night at 10:30pm :
+#
+# crontab -e
+# 30 20 * * * <BASE_DIR>/gd/garage-door/control.sh start reporting_daily
+# ************************************************************************
+
 def main():
     # Check command options to see if a custom configuration directory was supplied
     configDir = os.path.abspath(get_config_directory(sys.argv[1:], './conf'))
