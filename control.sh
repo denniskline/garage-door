@@ -20,7 +20,7 @@ if [ "$ACTION" == "help" ] ; then
 fi
 
 # ----------------------------------------------------------------------
-SERVICE_DIR=$(pwd)
+SERVICE_DIR=$HOME/gd/garage-door
 LOG_DIR=/var/local/gd/log
 
 declare -a SERVICES=(door_up_down sms_comman reporting_daily)

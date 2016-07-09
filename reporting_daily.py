@@ -14,7 +14,7 @@ from gdmod import Email
 # Schedule the report to run every night at 10:30pm :
 #
 # crontab -e
-# 30 20 * * * <BASE_DIR>/gd/garage-door/control.sh start reporting_daily
+# 30 22 * * * <BASE_DIR>/gd/garage-door/control.sh start reporting_daily
 # ************************************************************************
 
 def main():
