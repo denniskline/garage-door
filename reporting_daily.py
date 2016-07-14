@@ -32,7 +32,7 @@ def main():
 
     # Instantiate all the required modules
     db = Database(config.get('app.database.file'))
-    #email = Email(config.get('door.email.address'), config.get('door.email.pword'), config.get_conf_file_contents('email-style.css'))
+    email = Email(config.get('door.email.address'), config.get('door.email.pword'), config.get_conf_file_contents('email-style.css'))
 
     logging.info("Starting Reporting")
 
