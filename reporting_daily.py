@@ -14,7 +14,7 @@ from gdmod import Email
 # Schedule the report to run every night at 10:30pm :
 #
 # crontab -e
-# 30 20 * * * <BASE_DIR>/gd/garage-door/control.sh start reporting_daily
+# 30 22 * * * <BASE_DIR>/gd/garage-door/control.sh start reporting_daily
 # ************************************************************************
 
 def main():
@@ -25,7 +25,6 @@ def main():
 
     # Read in the configurations
     config = ApplicationConfiguration(configDir, ['door.ini', 'account-settings.ini'])
-    cssStyle = config.get_conf_file_contents('email-style.css')
 
     # Setup logger
     logging.basicConfig(format='%(asctime)s - %(name)s -  %(levelname)s - %(message)s', 
@@ -33,7 +32,7 @@ def main():
 
     # Instantiate all the required modules
     db = Database(config.get('app.database.file'))
-    email = Email(config.get('door.email.address'), config.get('door.email.pword'), config.get_conf_file_contents('email-style.css'))
+    #email = Email(config.get('door.email.address'), config.get('door.email.pword'), config.get_conf_file_contents('email-style.css'))
 
     logging.info("Starting Reporting")
 
@@ -47,13 +46,20 @@ def main():
             now = datetime.datetime.now()
             yesterday = now - datetime.timedelta(days=1)
             histories = db.find_door_state_histories(yesterday)
+            smsMessages = db.find_messages(yesterday)
 
             # Create the report
-            reportMessage = create_histories_report(histories, cssStyle, now, yesterday)
+            reportMessage = create_header(yesterday, now)
+            reportMessage += "\n<p>\n"
+            reportMessage += create_summary(histories, smsMessages)
+            reportMessage += "\n</p><p>\n"
+            reportMessage += create_history_detail(histories)
+            reportMessage += "\n</p>\n"
+            logging.info(reportMessage)
 
             # Send the report to all the configured user addresses
             email.send(find_user_email_addresses(config), 
-                'Garage Door Report: {} - {}'.format(yesterday.strftime("%b %d (%A) %I:%M%p"), datetime.datetime.now().strftime("%b %d (%A) %I:%M%p")), 
+                'Garage Door Report: {} - {}'.format(yesterday.strftime("%b %d (%a) %I:%M%p"), datetime.datetime.now().strftime("%b %d (%a) %I:%M%p")), 
                 reportMessage)
 
             return
@@ -64,13 +70,25 @@ def main():
 
     logging.info("Completed Reporting")
 
-def create_histories_report(histories, cssStyle, now, yesterday):
-    body = '<H3>Garage Door Report: {} - {}</H3>\n'.format(yesterday.strftime("%b %d (%A) %I:%M%p"), datetime.datetime.now().strftime("%b %d (%A) %I:%M%p"))
-    body += '<table>\n<tr><th>Time</th><th>State</th></tr>\n'
+def create_summary(histories, smsMessages):
+    opens = (1 for k in histories if k.get('state').lower() == 'open')
+    closes = (1 for k in histories if k.get('state').lower() == 'close')
+    failures = (1 for k in smsMessages if k.get('status').lower() == 'failed')
+    unauthorizeds = (1 for k in smsMessages if k.get('status').lower() == 'unauthorized')
+    ignores = (1 for k in smsMessages if k.get('status').lower() == 'ignored')
+    summary = "<table>\n<tr><th>Open</th><th>Close</th><th>Failure</th><th>Unauthorized</th><th>Ignore</th></tr>\n"
+    summary += ("<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n</table>\n".format(sum(opens), sum(closes), sum(failures),  sum(unauthorizeds),  sum(ignores)))
+    return summary
+
+def create_history_detail(histories):
+    body = '<table>\n<tr><th>Time</th><th>State</th></tr>\n'
     for history in histories:
         body += '<tr><td>{}</td><td>{}</td></tr>\n'.format(history.get('changedAt').strftime("%b %d %I:%M%p"), history.get('state'))
     body += '</table>\n'
     return body
+
+def create_header(startTime, endTime):
+    return '<H4>{} - {}</H4>\n'.format(startTime.strftime("%b %d (%a) %I:%M%p"), endTime.strftime("%b %d (%a) %I:%M%p"))
 
 def find_user_email_addresses(config):
     phoneNumbers = [x.strip() for x in config.get('sms.door.command.allowed.phonenumbers').split(',')]
