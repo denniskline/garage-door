@@ -44,9 +44,10 @@ def main():
                 logging.info("Setting door state to: {}".format(doorState))
                 db.insert_door_state_history(doorState, datetime.datetime.now())
                 
-                # When to door is opening, take a few pictures
-                if doorState == 'open':
-                    take_some_pictures(pi, dropbox, basePhotoDir, 4)
+                # When to door is opening, take a few pictures.  When close, just take 1 to make it 
+                # easier to make sense of the photos while browsing dropbox uploads
+                numPictures = 5 if doorState == 'open' else 1
+                take_some_pictures(pi, dropbox, basePhotoDir, numPictures, doorState)
 
         except:
             logging.error('Failure while monitoring door state change', exc_info=True)
@@ -56,13 +57,14 @@ def main():
         time.sleep(2)
 
 # Take a series of pictures with a small pause so we can 'record' the view of the door state change
-def take_some_pictures(pi, dropbox, basePhotoDir, numPhotos):
+def take_some_pictures(pi, dropbox, basePhotoDir, numPhotos, doorState):
     photoDir = ('{}/{}'.format(basePhotoDir, datetime.datetime.now().strftime("%Y%m%d")))
     photos = []
     for x in range(0, numPhotos):
-        photoFileName = pi.take_picture(photoDir)
+        if x > 0:
+            time.sleep(2)
+        photoFileName = pi.take_picture(photoDir, doorState)
         photos.append(photoFileName)
-        time.sleep(2)
 
     dropbox.upload(photos)
 

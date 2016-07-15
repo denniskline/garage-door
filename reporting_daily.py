@@ -32,7 +32,7 @@ def main():
 
     # Instantiate all the required modules
     db = Database(config.get('app.database.file'))
-    #email = Email(config.get('door.email.address'), config.get('door.email.pword'), config.get_conf_file_contents('email-style.css'))
+    email = Email(config.get('door.email.address'), config.get('door.email.pword'), config.get_conf_file_contents('email-style.css'))
 
     logging.info("Starting Reporting")
 
@@ -72,7 +72,7 @@ def main():
 
 def create_summary(histories, smsMessages):
     opens = (1 for k in histories if k.get('state').lower() == 'open')
-    closes = (1 for k in histories if k.get('state').lower() == 'close')
+    closes = (1 for k in histories if k.get('state').lower() == 'closed')
     failures = (1 for k in smsMessages if k.get('status').lower() == 'failed')
     unauthorizeds = (1 for k in smsMessages if k.get('status').lower() == 'unauthorized')
     ignores = (1 for k in smsMessages if k.get('status').lower() == 'ignored')

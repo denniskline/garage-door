@@ -178,7 +178,7 @@ class StatusCommand:
     def handle(self, message):
         logging.info("Handling command to status")
         state = "closed" if self.pi.is_door_closed() else "open"
-        statusMessage = ("Door: {}".format(state))
+        statusMessage = ("Door is currently {}".format(state))
         self.sms.send(message.get('phoneFrom'), statusMessage)
 
     def is_ack_success(self):

@@ -91,20 +91,23 @@ class Pi:
     def is_red_light_on(self):
         return self.redLightOn
 
-    def take_picture(self, photoDir):
+    def take_picture(self, photoDir, overlayMessage=None):
         logging.debug('taking a picture')
         if not os.path.exists(photoDir):
             os.makedirs(photoDir)
         fileName = ('{}_gd_photo.jpg'.format(datetime.datetime.now().strftime("%H%M%S")))
         file = ('{}/{}'.format(photoDir, fileName))
 
+        overlay = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        if overlayMessage is not None:
+            overlay += ('  {}'.format(overlayMessage))
+
         camera = picamera.PiCamera()
         try:
-            camera.resolution = (1920, 1080)
-            #camera.resolution = (2592, 1944)
-            camera.framerate = 15
-            #camera.brightness = 70 
+            camera.resolution = (1024, 768)
             camera.rotation = 90
+            camera.annotate_background = picamera.Color('black')
+            camera.annotate_text = overlay
             camera.capture(file)
         finally:
             camera.close()
@@ -113,7 +116,7 @@ class Pi:
 
     def diagnostics(self):
         diag = {}
-        diag['Door'] = "closed" if self.is_door_closed() else "open"
+        diag['Door'] = "Closed" if self.is_door_closed() else "Open"
         diag['Uptime'] = self.__find_uptime()
         diag['Temp'] = ("{}'C (80'C is high)".format(self.__find_system_temp()))
         diag['Network Down'] = self.is_yellow_light_on()
