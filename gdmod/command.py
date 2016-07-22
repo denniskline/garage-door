@@ -3,6 +3,7 @@ import datetime
 import logging
 from .exception import CommandIgnoredException
 import os
+import re
 
 class GarageDoorCommand:
 
@@ -32,7 +33,7 @@ class GarageDoorCommand:
         logging.info("Processing message command: {}".format(message))
 
         # Find the command that has been requested to run
-        messageBody = self.__get_message_body(message)
+        messageBody = re.sub('\s+',' ',self.__get_message_body(message))
         command = self.commands.get(messageBody, None)
 
         # Does this command require a challenge to be issued?

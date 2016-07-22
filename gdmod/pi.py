@@ -16,7 +16,7 @@ class Pi:
         self.redLightOn = False
         self.yellowLightOn = False
         self.greenLightOn = False
-        #self.garageOpener = OutputDevice(18, active_high=False, initial_value=False)
+        self.garageOpener = OutputDevice(18, active_high=False, initial_value=False)
         self.reedSwitch = InputDevice(23,False) # Pull down input device
         self.ledGreen = LED(22)
         self.ledYellow = LED(27)
@@ -25,10 +25,9 @@ class Pi:
 
     def click_door(self):
         logging.info("Clicking door")
-        #self.garageOpener.on()
-        #time.sleep(1)
-        #self.garageOpener.off()
-        #time.sleep(5) # Wait a few seconds for the door to fully do its thing
+        self.garageOpener.on()
+        time.sleep(.5)
+        self.garageOpener.off()
 
     def is_door_closed(self):
         #return True if random.randrange(0,2) == 1 else False
