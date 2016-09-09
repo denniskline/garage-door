@@ -125,7 +125,7 @@ class CloseCommand:
             raise CommandIgnoredException("Door already closed")
         else:
             self.pi.click_door()
-            for x in range(0, 5):
+            for x in range(0, 10):
                 if self.pi.is_door_closed():
                    return
                 time.sleep(2)
