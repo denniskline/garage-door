@@ -7,6 +7,8 @@
   - Diagnostics to stay on top of the Raspberry PI and your dropbox and twilio accounts
   - Usage reports emailed daily
 
+![garage-finished-product](https://cloud.githubusercontent.com/assets/4529833/19368282/4c33ce52-916d-11e6-816a-868597adec0c.png)
+
 ### Shopping List
   - Rasbperry Pi 3 https://www.amazon.com/gp/product/B01C6FFNY4
   - Raspberry Pi Case https://www.amazon.com/gp/product/B00MQLB1N6
@@ -30,7 +32,7 @@
 
 ### Setup Rasbperry PI
 
-###### Download Raspberry PI Operatin System:
+###### Download Raspberry PI Operating System:
   - https://www.raspberrypi.org/downloads/noobs/
   - zip file
 
