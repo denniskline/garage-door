@@ -30,7 +30,7 @@
 
 ### Setup Rasbperry PI
 
-###### Download Raspberry PI Operatin System:
+###### Download Raspberry PI Operating System:
   - https://www.raspberrypi.org/downloads/noobs/
   - zip file
 
