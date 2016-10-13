@@ -2,6 +2,7 @@ import datetime
 import logging
 from .exception import NetworkDownException
 from twilio.rest import TwilioRestClient
+import signal
 
 class Sms:
 
@@ -51,6 +52,8 @@ class Sms:
         messages = []
         try:
             logging.debug('calling twilio')
+            signal.signal(signal.SIGALRM, self.__alarmHandler)
+            signal.alarm(10)
             twilioMessages = self.twilioRestClient.messages.list(date_sent=datetime.datetime.utcnow())
             for message in twilioMessages:
                 messages.append({
@@ -65,6 +68,8 @@ class Sms:
                 })
         except Exception as e:
             raise NetworkDownException('Unable to call twilio to get list of messages from: {}'.format(dateSince)) from e
+        finally:
+            signal.alarm(0)
 
         #for message in messages:
         #    print("Translated message: {}".format(message))
@@ -97,3 +102,6 @@ class Sms:
         for record in usageRecords:
             return record
 
+    def __alarmHandler(signum, frame):
+        logging.info("Signal handler called with signal: {}".format(signum))
+        raise TimeoutError()
