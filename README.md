@@ -7,7 +7,7 @@
   - Diagnostics to stay on top of the Raspberry PI and your dropbox and twilio accounts
   - Usage reports emailed daily
 
-[https://cloud.githubusercontent.com/assets/4529833/19367969/b4a06dee-916b-11e6-8298-798a88cfdbe7.JPG]
+![alt text](https://cloud.githubusercontent.com/assets/4529833/19367969/b4a06dee-916b-11e6-8298-798a88cfdbe7.JPG "Finished Product")
 
 ### Shopping List
   - Rasbperry Pi 3 https://www.amazon.com/gp/product/B01C6FFNY4
