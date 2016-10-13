@@ -102,6 +102,6 @@ class Sms:
         for record in usageRecords:
             return record
 
-    def __alarmHandler(signum, frame):
+    def __alarmHandler(self, signum, frame):
         logging.info("Signal handler called with signal: {}".format(signum))
         raise TimeoutError()
