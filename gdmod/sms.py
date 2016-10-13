@@ -64,7 +64,7 @@ class Sms:
                     "createdAt": message.date_created,
                     "sentAt": message.date_sent,
                     "status": message.status,
-                    "body": message.body,
+                    "body": message.body.strip(),
                 })
         except Exception as e:
             raise NetworkDownException('Unable to call twilio to get list of messages from: {}'.format(dateSince)) from e
@@ -102,6 +102,6 @@ class Sms:
         for record in usageRecords:
             return record
 
-    def __alarmHandler(signum, frame):
+    def __alarmHandler(self, signum, frame):
         logging.info("Signal handler called with signal: {}".format(signum))
         raise TimeoutError()
