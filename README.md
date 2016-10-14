@@ -105,4 +105,15 @@
   - On Raspberry PI, install libraries:
     - sudo pip3 install dropbox
 
+## Building Opener
+
+##### Circuit Board
+
+![garage-circuit-board](https://cloud.githubusercontent.com/assets/4529833/19371889/fda1e8ec-9184-11e6-95ff-5e5997556b52.png)
+
+
+##### Wiring Guide
+
+
+## Installing and Running the Application
 
