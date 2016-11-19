@@ -17,6 +17,12 @@ from gdmod import Sms
 from gdmod import GarageDoorCommand
 from gdmod import Dropbox
 
+# ************************************************************************
+# Schedule to startup on reboot
+#
+# crontab -e
+# @reboot <BASE_DIR>/gd/garage-door/control.sh start sms_command
+# ************************************************************************
 def main():
     # Check command options to see if a custom configuration directory was supplied
     configDir = os.path.abspath(get_config_directory(sys.argv[1:], './conf'))
