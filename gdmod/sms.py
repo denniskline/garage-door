@@ -2,8 +2,12 @@ import datetime
 import logging
 from .exception import NetworkDownException
 from twilio.rest import TwilioRestClient
-import signal
 
+# ************************************************************************
+# Documentation:
+#    https://twilio-python.readthedocs.io/en/latest
+#    https://github.com/twilio/twilio-python
+# ************************************************************************
 class Sms:
 
     def __init__(self, db, account_sid, auth_token, account_phone_number):
@@ -11,7 +15,8 @@ class Sms:
         self.account_sid = account_sid
         self.auth_token = auth_token
         self.account_phone_number = account_phone_number
-        self.twilioRestClient = TwilioRestClient(self.account_sid, self.auth_token)
+        self.twilio_timeout=10
+        # self.twilioRestClient = self.__client()  <- doing this is more efficient but seems like we get corrupt connections holding onto this for to long
         pass
 
     def send(self, toPhoneNumber, message):
@@ -23,7 +28,7 @@ class Sms:
                 time.sleep(5) # Wait 5 seconds if this is a retry
 
             try:
-                response = self.twilioRestClient.sms.messages.create(body="{}".format(message),to="{}".format(toPhoneNumber),from_="{}".format(self.account_phone_number))
+                response = self.__client().sms.messages.create(body="{}".format(message),to="{}".format(toPhoneNumber),from_="{}".format(self.account_phone_number))
                 #response = "yay!"
                 logging.info("Response from sending message:{} = {}".format(message, response))
                 return
@@ -52,9 +57,10 @@ class Sms:
         messages = []
         try:
             logging.debug('calling twilio')
-            signal.signal(signal.SIGALRM, self.__alarmHandler)
-            signal.alarm(10)
-            twilioMessages = self.twilioRestClient.messages.list(date_sent=datetime.datetime.utcnow())
+
+            # Call twilio
+            twilioMessages = self.__client().messages.list(date_sent=datetime.datetime.utcnow())
+
             for message in twilioMessages:
                 messages.append({
                     "sid": message.sid,
@@ -68,8 +74,6 @@ class Sms:
                 })
         except Exception as e:
             raise NetworkDownException('Unable to call twilio to get list of messages from: {}'.format(dateSince)) from e
-        finally:
-            signal.alarm(0)
 
         #for message in messages:
         #    print("Translated message: {}".format(message))
@@ -97,11 +101,10 @@ class Sms:
     def __usage(self):
         begin = (datetime.datetime.now() - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
         end = datetime.datetime.now().strftime("%Y-%m-%d")
-        usageRecords = self.twilioRestClient.usage.records.list(category='sms', start_date=begin, end_date=end)
+        usageRecords = self.__client().usage.records.list(category='sms', start_date=begin, end_date=end)
 
         for record in usageRecords:
             return record
 
-    def __alarmHandler(self, signum, frame):
-        logging.info("Signal handler called with signal: {}".format(signum))
-        raise TimeoutError()
+    def __client(self):
+        return TwilioRestClient(self.account_sid, self.auth_token, timeout=self.twilio_timeout)

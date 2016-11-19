@@ -11,6 +11,12 @@ from gdmod import Database
 from gdmod import Pi
 from gdmod import Dropbox
 
+# ************************************************************************
+# Schedule to startup on reboot
+#
+# crontab -e
+# @reboot <BASE_DIR>/gd/garage-door/control.sh start door_up_down
+# ************************************************************************
 def main():
     # Check command options to see if a custom configuration directory was supplied
     configDir = os.path.abspath(get_config_directory(sys.argv[1:], './conf'))
