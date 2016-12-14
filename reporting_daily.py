@@ -92,8 +92,8 @@ def create_header(startTime, endTime):
     return '<H4>{} - {}</H4>\n'.format(startTime.strftime("%b %d (%a) %I:%M%p"), endTime.strftime("%b %d (%a) %I:%M%p"))
 
 def combine_histories_and_messages(histories, smsMessages):
-    cmdSuccessStyle = 'style="color:#004D00; border: 2px solid black;padding-left: 5px; padding-right: 5px; background:#e5ede5;"'
-    cmdErrorStyle = 'style="color:#4d0000; border: 2px solid black;padding-left: 5px; padding-right: 5px; background:#ede5e5;"'
+    cmdSuccessStyle = 'class="commandSuccess"'
+    cmdErrorStyle = 'class="commandError"'
     basicStyle = ''
 
     combinedList = []
