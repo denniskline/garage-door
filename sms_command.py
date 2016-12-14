@@ -20,7 +20,7 @@ from gdmod import Dropbox
 # ************************************************************************
 # Schedule to startup on reboot
 #
-# crontab -e
+# sudo crontab -e       (sudo is needed to access GPIO)
 # @reboot <BASE_DIR>/gd/garage-door/control.sh start sms_command
 # ************************************************************************
 def main():

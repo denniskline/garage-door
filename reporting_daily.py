@@ -47,13 +47,14 @@ def main():
             yesterday = now - datetime.timedelta(days=1)
             histories = db.find_door_state_histories(yesterday)
             smsMessages = db.find_messages(yesterday)
+            doorActions = combine_histories_and_messages(histories, smsMessages)
 
             # Create the report
             reportMessage = create_header(yesterday, now)
             reportMessage += "\n<p>\n"
             reportMessage += create_summary(histories, smsMessages)
             reportMessage += "\n</p><p>\n"
-            reportMessage += create_history_detail(histories)
+            reportMessage += create_action_detail(doorActions)
             reportMessage += "\n</p>\n"
             logging.info(reportMessage)
 
@@ -80,15 +81,30 @@ def create_summary(histories, smsMessages):
     summary += ("<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n</table>\n".format(sum(opens), sum(closes), sum(failures),  sum(unauthorizeds),  sum(ignores)))
     return summary
 
-def create_history_detail(histories):
-    body = '<table>\n<tr><th>Time</th><th>State</th></tr>\n'
-    for history in histories:
-        body += '<tr><td>{}</td><td>{}</td></tr>\n'.format(history.get('changedAt').strftime("%b %d %I:%M%p"), history.get('state'))
+def create_action_detail(doorActions):
+    body = '<table>\n<tr><th>Time</th><th>Action</th></tr>\n'
+    for action in doorActions:
+        body += '<tr><td>{}</td><td><span {}>{}</span></td></tr>\n'.format(action.get('timestamp').strftime("%b %d %I:%M%p"), action.get('style'), action.get('action'))
     body += '</table>\n'
     return body
 
 def create_header(startTime, endTime):
     return '<H4>{} - {}</H4>\n'.format(startTime.strftime("%b %d (%a) %I:%M%p"), endTime.strftime("%b %d (%a) %I:%M%p"))
+
+def combine_histories_and_messages(histories, smsMessages):
+    cmdSuccessStyle = 'style="color:#004D00; border: 2px solid black;padding-left: 5px; padding-right: 5px; background:#e5ede5;"'
+    cmdErrorStyle = 'style="color:#4d0000; border: 2px solid black;padding-left: 5px; padding-right: 5px; background:#ede5e5;"'
+    basicStyle = ''
+
+    combinedList = []
+    for history in histories:
+        combinedList.append({"action": history.get('state'), "timestamp": history.get('changedAt'), "style": basicStyle})
+    for smsMessage in smsMessages:
+        style = cmdSuccessStyle if smsMessage.get('status').lower() == 'processed' else cmdErrorStyle
+        combinedList.append({"action": smsMessage.get('body').lower(), "timestamp": smsMessage.get('createdAt'), "style": style})
+
+    combinedList.sort(key=lambda c: c.timestamp)
+    return combinedList
 
 def find_user_email_addresses(config):
     phoneNumbers = [x.strip() for x in config.get('sms.door.command.allowed.phonenumbers').split(',')]
