@@ -109,7 +109,7 @@
 
 ##### Circuit Board
 
-![garage-circuit-board](https://cloud.githubusercontent.com/assets/4529833/19371889/fda1e8ec-9184-11e6-95ff-5e5997556b52.png)
+![garage-circuit-board](https://cloud.githubusercontent.com/assets/4529833/19371889/fda1e8ec-9184-11e6-95ff-5e5997556b52.png =300x)
 
 
 ##### Wiring Guide

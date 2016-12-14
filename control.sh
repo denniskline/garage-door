@@ -14,7 +14,7 @@ ACTION=$1
 if [ "$ACTION" == "help" ] ; then
     echo "USAGE:"
     echo "$0 [command] [service name|all]"
-    echo "$0 [start|stop|tail] [door_up_down|sms_command|reporting_daily|alarm_droo_open]"
+    echo "$0 [start|stop|tail] [door_up_down|sms_command|reporting_daily|alarm_door_open]"
     echo "-----------------------------------------"
     exit 0
 fi
@@ -23,7 +23,7 @@ fi
 SERVICE_DIR=$HOME/gd/garage-door
 LOG_DIR=/var/local/gd/log
 
-declare -a SERVICES=(door_up_down sms_command reporting_daily alarm_droo_open)
+declare -a SERVICES=(door_up_down sms_command reporting_daily alarm_door_open)
 
 while [ "$ACTION" != "start" ] && [ "$ACTION" != "stop" ] && [ "$ACTION" != "tail" ] && [ "$ACTION" != "clean" ]; do
     read -p "What would you like to do [start or stop or tail or clean] groot services? " ACTION
