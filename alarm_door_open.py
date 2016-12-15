@@ -14,8 +14,8 @@ from gdmod import Sms
 # Schedule to run whenever you would like to be alerted and for whatever interval :
 #
 # Run every 15 minutes between the hours of 10pm and 5am
-# crontab -e
-# 15 22,23,0-5 * * * <BASE_DIR>/gd/garage-door/control.sh start alarm_door_open
+# sudo crontab -e           (sudo is needed to access GPIO)
+# */15 0-5,22,23 * * * <BASE_DIR>/gd/garage-door/control.sh start alarm_door_open
 # ************************************************************************
 def main():
     # Check command options to see if a custom configuration directory was supplied
