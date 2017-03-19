@@ -6,6 +6,7 @@ import time
 import logging
 import getopt
 import sys
+from dateutil import tz
 from gdmod import ApplicationConfiguration
 from gdmod import Database
 from gdmod import Email
@@ -96,12 +97,16 @@ def combine_histories_and_messages(histories, smsMessages):
     cmdErrorStyle = 'class="commandError"'
     basicStyle = ''
 
+    from_zone = tz.tzutc()
+    to_zone = tz.tzlocal()
+
     combinedList = []
     for history in histories:
         combinedList.append({"action": history.get('state'), "timestamp": history.get('changedAt'), "style": basicStyle})
     for smsMessage in smsMessages:
         style = cmdSuccessStyle if smsMessage.get('status').lower() == 'processed' else cmdErrorStyle
-        combinedList.append({"action": smsMessage.get('body').lower(), "timestamp": smsMessage.get('createdAt'), "style": style})
+        createdAt = smsMessage.get('createdAt').replace(tzinfo=from_zone)
+        combinedList.append({"action": smsMessage.get('body').lower(), "timestamp": createdAt.astimezone(to_zone), "style": style})
 
     combinedList.sort(key=lambda c: c.timestamp)
     return combinedList
