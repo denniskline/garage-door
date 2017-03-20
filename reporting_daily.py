@@ -103,7 +103,7 @@ def combine_histories_and_messages(histories, smsMessages):
         style = cmdSuccessStyle if smsMessage.get('status').lower() == 'processed' else cmdErrorStyle
         combinedList.append({"action": smsMessage.get('body').lower(), "timestamp": smsMessage.get('createdAt'), "style": style})
 
-    combinedList.sort(key=lambda c: c.timestamp)
+    combinedList.sort(key=lambda c: c.get("timestamp"))
     return combinedList
 
 def find_user_email_addresses(config):
