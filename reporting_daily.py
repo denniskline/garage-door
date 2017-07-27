@@ -108,7 +108,7 @@ def combine_histories_and_messages(histories, smsMessages):
         createdAt = smsMessage.get('createdAt').replace(tzinfo=from_zone)
         combinedList.append({"action": smsMessage.get('body').lower(), "timestamp": createdAt.astimezone(to_zone), "style": style})
 
-    combinedList.sort(key=lambda c: c.timestamp)
+    combinedList.sort(key=lambda c: c.get("timestamp"))
     return combinedList
 
 def find_user_email_addresses(config):
