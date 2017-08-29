@@ -8,7 +8,8 @@ import getopt
 import sys
 from gdmod import ApplicationConfiguration
 from gdmod import Database
-from gdmod import Pi
+from gdmod import DoorState
+from gdmod import Camera
 from gdmod import Dropbox
 
 # ************************************************************************
@@ -32,7 +33,8 @@ def main():
 
    # Instantiate all the required modules
     db = Database(config.get('app.database.file'))
-    pi = Pi()
+    doorState = DoorState()
+    camera = Camera()
     basePhotoDir = config.get('door.media.photo.directory')
     dropbox = Dropbox(config.get('dropbox.gd.access.token'))
 
@@ -41,7 +43,7 @@ def main():
     # Watch for any changes to the state of the door.  At least until True stops being True
     while True:
         try:
-            doorState = 'closed' if pi.is_door_closed() else 'open'
+            doorState = 'closed' if doorState.is_door_closed() else 'open'
             latestStateHistory = db.find_door_state_history_latest()
             logging.debug('latestStateHistory: {}'.format(latestStateHistory))
 
@@ -69,7 +71,7 @@ def take_some_pictures(pi, dropbox, basePhotoDir, numPhotos, doorState):
     for x in range(0, numPhotos):
         if x > 0:
             time.sleep(2)
-        photoFileName = pi.take_picture(photoDir, doorState)
+        photoFileName = camera.take_picture(photoDir, doorState)
         photos.append(photoFileName)
 
     dropbox.upload(photos)
