@@ -55,7 +55,7 @@ def main():
                 # When to door is opening, take a few pictures.  When close, just take 1 to make it 
                 # easier to make sense of the photos while browsing dropbox uploads
                 numPictures = 5 if openOrClose == 'open' else 1
-                take_some_pictures(pi, dropbox, basePhotoDir, numPictures, openOrClose)
+                take_some_pictures(camera, dropbox, basePhotoDir, numPictures, openOrClose)
 
         except:
             logging.error('Failure while monitoring door state change', exc_info=True)
@@ -65,7 +65,7 @@ def main():
         time.sleep(2)
 
 # Take a series of pictures with a small pause so we can 'record' the view of the door state change
-def take_some_pictures(pi, dropbox, basePhotoDir, numPhotos, openOrClose):
+def take_some_pictures(camera, dropbox, basePhotoDir, numPhotos, openOrClose):
     photoDir = ('{}/{}'.format(basePhotoDir, datetime.datetime.now().strftime("%Y%m%d")))
     photos = []
     for x in range(0, numPhotos):
