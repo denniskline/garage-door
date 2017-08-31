@@ -8,7 +8,8 @@ import getopt
 import sys
 from gdmod import ApplicationConfiguration
 from gdmod import Database
-from gdmod import Pi
+from gdmod import DoorState
+from gdmod import Camera
 from gdmod import Dropbox
 
 # ************************************************************************
@@ -32,7 +33,8 @@ def main():
 
    # Instantiate all the required modules
     db = Database(config.get('app.database.file'))
-    pi = Pi()
+    doorState = DoorState()
+    camera = Camera()
     basePhotoDir = config.get('door.media.photo.directory')
     dropbox = Dropbox(config.get('dropbox.gd.access.token'))
 
@@ -41,19 +43,19 @@ def main():
     # Watch for any changes to the state of the door.  At least until True stops being True
     while True:
         try:
-            doorState = 'closed' if pi.is_door_closed() else 'open'
+            openOrClose = 'closed' if doorState.is_door_closed() else 'open'
             latestStateHistory = db.find_door_state_history_latest()
             logging.debug('latestStateHistory: {}'.format(latestStateHistory))
 
             # If a state change is detected, persist the new state
-            if latestStateHistory is None or doorState != latestStateHistory.get('state', None):
-                logging.info("Setting door state to: {}".format(doorState))
-                db.insert_door_state_history(doorState, datetime.datetime.now())
+            if latestStateHistory is None or openOrClose != latestStateHistory.get('state', None):
+                logging.info("Setting door state to: {}".format(openOrClose))
+                db.insert_door_state_history(openOrClose, datetime.datetime.now())
                 
                 # When to door is opening, take a few pictures.  When close, just take 1 to make it 
                 # easier to make sense of the photos while browsing dropbox uploads
-                numPictures = 5 if doorState == 'open' else 1
-                take_some_pictures(pi, dropbox, basePhotoDir, numPictures, doorState)
+                numPictures = 5 if openOrClose == 'open' else 1
+                take_some_pictures(camera, dropbox, basePhotoDir, numPictures, openOrClose)
 
         except:
             logging.error('Failure while monitoring door state change', exc_info=True)
@@ -63,13 +65,13 @@ def main():
         time.sleep(2)
 
 # Take a series of pictures with a small pause so we can 'record' the view of the door state change
-def take_some_pictures(pi, dropbox, basePhotoDir, numPhotos, doorState):
+def take_some_pictures(camera, dropbox, basePhotoDir, numPhotos, openOrClose):
     photoDir = ('{}/{}'.format(basePhotoDir, datetime.datetime.now().strftime("%Y%m%d")))
     photos = []
     for x in range(0, numPhotos):
         if x > 0:
             time.sleep(2)
-        photoFileName = pi.take_picture(photoDir, doorState)
+        photoFileName = camera.take_picture(photoDir, openOrClose)
         photos.append(photoFileName)
 
     dropbox.upload(photos)

@@ -7,24 +7,27 @@ import re
 
 class GarageDoorCommand:
 
-    def __init__(self, config, db, challenge, pi, sms, email, dropbox):
+    def __init__(self, config, db, challenge, pi, doorRemote, doorState, camera, sms, email, dropbox):
         self.config = config
         self.db = db
         self.challenge = challenge
         self.pi = pi
+        self.doorRemote = doorRemote
+        self.doorState = doorState
+        self.camera = camera
         self.sms = sms
         self.email = email
         self.dropbox = dropbox
 
         # All the accepted commands.  These must appear as the body of a text message (case insensitive).
         self.commands = {
-            'close': CloseCommand(self.pi, self.db),
+            'close': CloseCommand(self.doorRemote, self.doorState, self.db),
             'diagnostics': DiagnosticsCommand(self.config, self.pi, self.db, self.email, self.sms, self.dropbox),
             'help': HelpCommand(self.sms),
             'lock': LockCommand(self.db, self.sms),
-            'open': OpenCommand(self.pi, self.db),
-            'photo': PhotoCommand(self.config, self.pi, self.email),
-            'status': StatusCommand(self.pi, self.db, self.sms),
+            'open': OpenCommand(self.doorRemote, self.doorState, self.db),
+            'photo': PhotoCommand(self.config, self.camera, self.email),
+            'status': StatusCommand(self.doorState, self.db, self.sms),
             'unlock': UnlockCommand(self.db, self.sms),
         }
         pass
@@ -89,21 +92,22 @@ class GarageDoorCommand:
 
 class OpenCommand:
 
-    def __init__(self, pi, db):
-        self.pi = pi
+    def __init__(self, doorRemote, doorState, db):
+        self.doorRemote = doorRemote
+        self.doorState = doorState
         self.db = db
         pass
 
     def handle(self, message):
         logging.info("Handling command to open door")
-        if not self.pi.is_door_closed():
+        if not self.doorState.is_door_closed():
             raise CommandIgnoredException('Door already open')
         elif self.db.find_door_lock() is not None:
             raise CommandIgnoredException('Door locked, unable to open')
         else:
-            self.pi.click_door()
+            self.doorRemote.click_door()
             for x in range(0, 10):
-                if not self.pi.is_door_closed():
+                if not self.doorState.is_door_closed():
                    return
                 time.sleep(2)
             raise ValueError("Failure: Door still not opened after 20 seconds") # TODO: CommandFailureException ?
@@ -114,19 +118,20 @@ class OpenCommand:
 
 class CloseCommand:
 
-    def __init__(self, pi, db):
-        self.pi = pi
+    def __init__(self, doorRemote, doorState, db):
+        self.doorRemote = doorRemote
+        self.doorState = doorState
         self.db = db
         pass
 
     def handle(self, message):
         logging.info("Handling command to close door")
-        if self.pi.is_door_closed():
+        if self.doorRemote.is_door_closed():
             raise CommandIgnoredException("Door already closed")
         else:
-            self.pi.click_door()
+            self.doorState.click_door()
             for x in range(0, 10):
-                if self.pi.is_door_closed():
+                if self.doorRemote.is_door_closed():
                    return
                 time.sleep(2)
             raise ValueError("Failure: Door still not closed after 10 seconds")
@@ -170,15 +175,15 @@ class UnlockCommand:
 
 class StatusCommand:
 
-    def __init__(self, pi, db, sms):
-        self.pi = pi
+    def __init__(self, doorState, db, sms):
+        self.doorState = doorState
         self.db = db
         self.sms = sms
         pass
 
     def handle(self, message):
         logging.info("Handling command to status")
-        state = "closed" if self.pi.is_door_closed() else "open"
+        state = "closed" if self.doorState.is_door_closed() else "open"
         statusMessage = ("Door is currently {}".format(state))
         self.sms.send(message.get('phoneFrom'), statusMessage)
 
@@ -220,9 +225,9 @@ class DiagnosticsCommand:
 
 class PhotoCommand:
 
-    def __init__(self, config, pi, email):
+    def __init__(self, config, camera, email):
         self.config = config
-        self.pi = pi
+        self.camera = camera
         self.email = email
         pass
 
@@ -231,7 +236,7 @@ class PhotoCommand:
         photoDir = self.config.get('door.media.photo.directory')
 
         dateFolder = ('{}/{}'.format(photoDir, datetime.datetime.now().strftime("%Y%m%d")))
-        photoName = self.pi.take_picture(dateFolder)
+        photoName = self.camera.take_picture(dateFolder)
         logging.info('[photo] {}'.format(photoName))
         self.email.send(self.config.get(message.get('phoneFrom'), 'user.email.address'), 'Photo', 'Enjoy this lovely photo', [photoName])
 

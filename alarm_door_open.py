@@ -7,7 +7,7 @@ import getopt
 import sys
 from gdmod import ApplicationConfiguration
 from gdmod import Database
-from gdmod import Pi
+from gdmod import DoorState
 from gdmod import Sms
 
 # ************************************************************************
@@ -32,7 +32,7 @@ def main():
 
     # Instantiate all the required modules
     db = Database(config.get('app.database.file'))
-    pi = Pi()
+    doorState = DoorState()
     sms = Sms(db, config.get('sms.account.id'), config.get('sms.account.token'), config.get('sms.account.phone.number'))
 
     logging.info("Starting Open Door Alarm Check")
@@ -42,7 +42,7 @@ def main():
 
         try:
             logging.info('Executing check')
-            if not pi.is_door_closed():
+            if not doorState.is_door_closed():
                 logging.warn('Door is not closed.  Initiating Alarm')
                 alarm(sms, find_user_sms_numbers(config))
             return
