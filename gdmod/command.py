@@ -27,7 +27,7 @@ class GarageDoorCommand:
             'lock': LockCommand(self.db, self.sms),
             'open': OpenCommand(self.doorRemote, self.doorState, self.db),
             'photo': PhotoCommand(self.config, self.camera, self.email),
-            'status': StatusCommand(self.pi, self.db, self.sms),
+            'status': StatusCommand(self.doorState, self.db, self.sms),
             'unlock': UnlockCommand(self.db, self.sms),
         }
         pass

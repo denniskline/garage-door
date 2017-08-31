@@ -126,7 +126,7 @@ class Pi:
     def __init__(self):
         pass
 
-   def diagnostics(self):
+    def diagnostics(self):
         diag = {}
         diag['Uptime'] = self.__find_uptime()
         diag['Temp'] = ("{}'C (80'C is high)".format(self.__find_system_temp()))
