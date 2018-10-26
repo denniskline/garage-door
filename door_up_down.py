@@ -22,7 +22,7 @@ def main():
     # Check command options to see if a custom configuration directory was supplied
     configDir = os.path.abspath(get_config_directory(sys.argv[1:], './conf'))
     if not os.path.isdir(configDir):
-        raise ValueError('No such configuration directory exists: {}'.format(configDir))
+        raise ValueError('No such configuration directory exists : {}'.format(configDir))
 
     # Read in the configurations
     config = ApplicationConfiguration(configDir, ['door.ini', 'account-settings.ini'])
