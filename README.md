@@ -60,7 +60,7 @@
   - Copy all contents of zip file to Micro SDC
 
 ###### Initial Boot:
-  - Hookup keyboard, mouse, and HDMI monitor
+  - Hook up keyboard, mouse, and HDMI monitor
   - Insert Micro SDC
   - Hookup power (wait ~5/10 minutes)
 
