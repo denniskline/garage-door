@@ -14,7 +14,7 @@ ACTION=$1
 if [ "$ACTION" == "help" ] ; then
     echo "USAGE:"
     echo "$0 [command] [service name|all]"
-    echo "$0 [start|stop|tail] [door_up_down|sms_command|reporting_daily|alarm_door_open]"
+    echo "$0 [start|stop|tail|clean] [door_up_down|sms_command|reporting_daily|alarm_door_open]"
     echo "-----------------------------------------"
     exit 0
 fi
